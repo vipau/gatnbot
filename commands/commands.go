@@ -11,9 +11,10 @@ import (
 	"time"
 )
 
+// HandleCommands sets endpoints handled by the bot
 func HandleCommands(configmap settings.Settings) *tb.Bot {
+	// create new bot
 	b, err := tb.NewBot(tb.Settings{
-		// You can also set custom API URL.
 		// If field is empty it equals to "https://api.telegram.org".
 		URL: configmap.Apiurl,
 
@@ -26,6 +27,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		log.Fatal(err)
 		return nil
 	}
+
+	// start handling our custom commands
 
 	b.Handle("/links", func(m *tb.Message) {
 		if settings.Has(configmap.Chatid, m.Chat.ID) ||

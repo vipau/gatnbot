@@ -10,11 +10,17 @@ import (
 	"html"
 )
 
+// try to reuse an existing gmail service if active
+var ctx = context.Background()
 var gmailsrv *gmail.Service = nil
 
+// CheckAndForward checks for unread emails matching query and forward them to group
 func CheckAndForward(ourmail string, chatids []int64, b *tb.Bot) {
-	ctx := context.Background()
-	gmailsrv = gmailAPI.ConnectToService(ctx, gmail.MailGoogleComScope)
+	if gmailsrv == nil {
+		gmailsrv = gmailAPI.ConnectToService(ctx, gmail.MailGoogleComScope)
+		// full gmail scope needed for read + mark as read
+		// know a better combination of scopes? please open an issue :)
+	}
 
 	// die if the email alias is empty
 	if ourmail == "" {
@@ -28,7 +34,7 @@ func CheckAndForward(ourmail string, chatids []int64, b *tb.Bot) {
 		return // exit function if the query fails
 	}
 
-	// build a request to mark it as read (so we don't process it again)
+	// build a request to mark a msg as read
 	req := &gmail.ModifyMessageRequest{
 		RemoveLabelIds: []string{"UNREAD"},
 	}
@@ -47,6 +53,8 @@ func CheckAndForward(ourmail string, chatids []int64, b *tb.Bot) {
 		for i := range chatids {
 			b.Send(&tb.Chat{ID: chatids[i]}, message, opts)
 		}
+
+		// mark as read on server
 		_, err := inboxer.MarkAs(gmailsrv, msg, req)
 		if err != nil {
 			panic(err)

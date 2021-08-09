@@ -15,6 +15,7 @@ type Settings struct {
 	Linksmsg string  `hcl:"linksmsg"`
 }
 
+// LoadSettings unmarshals the HCL config file and returns our Settings.
 func LoadSettings(filename string) Settings {
 	var Config Settings
 	err := hclsimple.DecodeFile(filename, nil, &Config)
@@ -22,12 +23,10 @@ func LoadSettings(filename string) Settings {
 		log.Fatalf("Failed to load configuration: %s", err)
 	}
 
-	//	log.Printf("Configuration is %#v", Config)
 	return Config
 }
 
-// check if array contains a specific value
-// for us, whether a chat is whitelisted or a user is admin
+// Has checks if an array contains a specific value
 func Has(list []int64, a int64) bool {
 	for _, b := range list {
 		if b == a {
