@@ -44,3 +44,14 @@ Ver 0.0.1 turbo alpha
 
 - linksmsg
     - The message containing the response of the /links command in Markdown format.
+
+## How do I do <thing>?
+
+This is still a huge WIP! Don't expect to kill dragons with this code, but issues and PRs are accepted.  
+As for now, here's what to check if you're curious:  
+
+- `settings` loads the HCL config file into memory
+- `crontasks` handles the scheduled actions, including refreshing the Markov model
+- `commands` handles the /commands that the bot replies to.
+- `sendemail` handles checking for unread email, forwarding it, and marking it as read
+- `fakernews-mod` modified standalone version of [fakernews](https://github.com/mb-14/gomarkov/blob/master/examples/fakernews/fakernews.go) generates fake Hacker News stories
