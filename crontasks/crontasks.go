@@ -13,7 +13,7 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	// for every group in the array of IDs
 	for i := range config.Chatid {
 
-		// make a CET scheduler
+		// make a scheduler
 		tmz, _ := time.LoadLocation(config.Timezone)
 		s := gocron.NewScheduler(tmz)
 
