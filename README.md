@@ -45,7 +45,7 @@ Ver 0.0.1 turbo alpha
 - linksmsg
     - The message containing the response of the /links command in Markdown format.
 
-## How do I do <thing>?
+## How do I do \<thing\>?
 
 This is still a huge WIP! Don't expect to kill dragons with this code, but issues and PRs are accepted.  
 As for now, here's what to check if you're curious:  
