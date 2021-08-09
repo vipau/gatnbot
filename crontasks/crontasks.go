@@ -11,7 +11,7 @@ import (
 
 func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	// for every group in the array of IDs
-	for i, _ := range config.Chatid {
+	for i := range config.Chatid {
 
 		// make a CET scheduler
 		cet, _ := time.LoadLocation("Europe/Rome")
