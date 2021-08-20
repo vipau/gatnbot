@@ -53,7 +53,7 @@ func CheckAndForward(ourmail string, chatids []int64, b *tb.Bot) {
 		for _, i := range chatids {
 			group := tb.ChatID(i)
 			b.Send(group, message, opts)
-			
+
 		}
 
 		// mark as read on server
