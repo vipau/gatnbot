@@ -26,8 +26,8 @@ func LoadSettings(filename string) Settings {
 	return Config
 }
 
-// Has checks if an array contains a specific value
-func Has(list []int64, a int64) bool {
+// ListContainsID checks if an array contains a specific value
+func ListContainsID(list []int64, a int64) bool {
 	for _, b := range list {
 		if b == a {
 			return true

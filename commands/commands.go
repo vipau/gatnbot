@@ -31,16 +31,16 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	// start handling our custom commands
 
 	b.Handle("/links", func(m *tb.Message) {
-		if settings.Has(configmap.Chatid, m.Chat.ID) ||
-			settings.Has(configmap.Adminid, m.Chat.ID) {
+		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
+			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
 			opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 			b.Send(m.Chat, configmap.Linksmsg, opts)
 		}
 	})
 
 	b.Handle("/turbo", func(m *tb.Message) {
-		if settings.Has(configmap.Chatid, m.Chat.ID) ||
-			settings.Has(configmap.Adminid, m.Chat.ID) {
+		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
+			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
 			rand.Seed(time.Now().UnixNano())
 			min := 4
 			max := 57
@@ -50,8 +50,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/hackernews", func(m *tb.Message) {
-		if settings.Has(configmap.Chatid, m.Chat.ID) ||
-			settings.Has(configmap.Adminid, m.Chat.ID) {
+		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
+			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
 			if _, err := os.Stat("model.json"); err == nil {
 			} else if os.IsNotExist(err) {
 				fakernews_mod.TrainModel()
@@ -64,7 +64,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/admincheck", func(m *tb.Message) {
-		if settings.Has(configmap.Adminid, m.Chat.ID) {
+		if settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
 			b.Send(m.Chat, "you win!")
 		}
 	})
