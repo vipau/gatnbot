@@ -10,14 +10,18 @@ import (
 )
 
 func StartCronProcesses(config settings.Settings, b *tb.Bot) {
+	// make a scheduler
+	tmz, _ := time.LoadLocation(config.Timezone)
+	s := gocron.NewScheduler(tmz)
+
+	// poll gmail API once per minute
+	// already acts on all chats, no need to do it in the for
+	s.Every(1).Minute().Do(func() { sendemail.CheckAndForward(config.Ouremail, config.Chatid, b) })
+
 	// for every group in the array of IDs
 	for _, i := range config.Chatid {
 		// get group instance from ID
 		group := tb.ChatID(i)
-
-		// make a scheduler
-		tmz, _ := time.LoadLocation(config.Timezone)
-		s := gocron.NewScheduler(tmz)
 
 		// its friday then
 		s.Every(1).Friday().At("09:00").Do(func() { b.Send(group, "https://www.youtube.com/watch?v=1AnG04qnLqI") })
@@ -29,10 +33,7 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 		// reload top 500 hacker news articles for the markov chain at midnight
 		s.Every(1).Day().At("00:00").Do(func() { fakernews_mod.TrainModel() })
 
-		// poll gmail API once per minute
-		s.Every(1).Minute().Do(func() { sendemail.CheckAndForward(config.Ouremail, config.Chatid, b) })
-
-		// start scheduler asynchronously
-		s.StartAsync()
 	}
+	// start scheduler asynchronously
+	s.StartAsync()
 }
