@@ -58,7 +58,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			} // train the model first if it doesn't exist
 
 			out := fakernews_mod.GenerateNews()
-			//out, _ := exec.Command("./fakernews").Output()
 			b.Send(m.Chat, string(out))
 		}
 	})
