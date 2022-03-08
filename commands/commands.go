@@ -113,7 +113,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					Stop:      []string{"."},
 				})
 				if err == nil {
-					b.Reply(m.ReplyTo, resp.Choices[0].Text)
+					b.Reply(m, resp.Choices[0].Text)
 				} else {
 					b.Reply(m, "Error occurred :(( details: \n"+err.Error())
 				}
