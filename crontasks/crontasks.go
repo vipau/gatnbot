@@ -26,8 +26,7 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 		// its friday then
 		s.Every(1).Friday().At("09:00").Do(func() { b.Send(group, "https://www.youtube.com/watch?v=1AnG04qnLqI") })
 
-		// misc shitpost
-		s.Every(1).Day().At("04:20").Do(func() { b.Send(group, "Ricordate di blazzarla duro come lo zio Snoop") })
+		// misc shotpost
 		s.Every(1).Day().At("13:12").Do(func() { b.Send(group, "A.C.A.B.") })
 
 		// reload top 500 hacker news articles for the markov chain at midnight
