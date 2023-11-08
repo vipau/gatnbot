@@ -21,6 +21,7 @@ type hnStory struct {
 	Title string `json:"title"`
 }
 
+// refresh model with the latest 500 HN stories
 func TrainModel() {
 	chain, err := buildModel()
 	if err != nil {
@@ -30,6 +31,7 @@ func TrainModel() {
 	saveModel(chain)
 }
 
+// GenerateNews generates fake HN story (public method)
 func GenerateNews() string {
 	chain, err := loadModel()
 	if err != nil {
@@ -39,6 +41,7 @@ func GenerateNews() string {
 	return generateHNStory(chain)
 }
 
+// build the markov model from scratch
 func buildModel() (*gomarkov.Chain, error) {
 	stories, err := fetchHNTopStories()
 	if err != nil {
@@ -63,6 +66,7 @@ func buildModel() (*gomarkov.Chain, error) {
 	return chain, nil
 }
 
+// load markov model from file
 func loadModel() (*gomarkov.Chain, error) {
 	var chain gomarkov.Chain
 	data, err := ioutil.ReadFile("model.json")
@@ -76,6 +80,7 @@ func loadModel() (*gomarkov.Chain, error) {
 	return &chain, nil
 }
 
+// fetch top 500 articles from HN
 func fetchHNTopStories() ([]int, error) {
 	fmt.Println("Fetching HN top stories...")
 	resp, err := http.Get(fmt.Sprintf("%s%s", hnBaseURL, hnTopStoriesPath))
@@ -92,6 +97,7 @@ func fetchHNTopStories() ([]int, error) {
 	return stories, err
 }
 
+// fetch single HN article
 func fetchHNStory(storyID int) (hnStory, error) {
 	var story hnStory
 	resp, err := http.Get(fmt.Sprintf("%s%s%d.json", hnBaseURL, hnStoryItemPath, storyID))
@@ -107,6 +113,7 @@ func fetchHNStory(storyID int) (hnStory, error) {
 	return story, err
 }
 
+// save markov model to file
 func saveModel(chain *gomarkov.Chain) {
 	jsonObj, _ := json.Marshal(chain)
 	err := ioutil.WriteFile("model.json", jsonObj, 0644)
@@ -115,6 +122,7 @@ func saveModel(chain *gomarkov.Chain) {
 	}
 }
 
+// generate fake HN story
 func generateHNStory(chain *gomarkov.Chain) string {
 	tokens := []string{gomarkov.StartToken}
 	for tokens[len(tokens)-1] != gomarkov.EndToken {

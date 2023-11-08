@@ -14,9 +14,8 @@ func main() {
 	b := commands.HandleCommands(configmap)
 
 	// start background activities (cron) while non blocking the flow
-	// see internal/crontasks for more info
 	crontasks.StartCronProcesses(configmap, b)
 
-	// start the bot (blocking call)
+	// start the bot polling (blocking call)
 	b.Start()
 }
