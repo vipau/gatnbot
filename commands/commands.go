@@ -1,13 +1,19 @@
 package commands
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"github.com/PullRequestInc/go-gpt3"
 	fakernews_mod "github.com/paualberto/gatnbot/fakernews-mod"
 	"github.com/paualberto/gatnbot/settings"
 	tb "gopkg.in/tucnak/telebot.v2"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -62,10 +68,59 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		}
 	})
 
-	b.Handle("/admincheck", func(m *tb.Message) {
-		if settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
-			b.Send(m.Chat, "you win!")
+	b.Handle("/supercazzola", func(m *tb.Message) {
+		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
+			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
+			// query the BS generator
+			resp, err := http.Get("http://ftrv.se/bullshit")
+			defer resp.Body.Close()
+			if err != nil {
+				errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
+				fmt.Println(errmsg)
+				b.Send(m.Chat, errmsg)
+			} else {
+				body, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
+					fmt.Println(errmsg)
+					b.Send(m.Chat, errmsg)
+				} else {
+					// here we enter a loop to strip the HTML tags from the response
+					scanner := bufio.NewScanner(strings.NewReader(string(body)))
+					for scanner.Scan() {
+						line := scanner.Text()
+						// simply check that the line does not start with <
+						if !strings.HasPrefix(line, "<") {
+							b.Send(m.Chat, line)
+						}
+					}
+				}
+
+			}
 		}
+	})
+
+	b.Handle("/gpt3", func(m *tb.Message) {
+		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
+			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
+			if !m.IsReply() {
+				b.Reply(m, "Need to reply to a message to use /gpt3")
+			} else {
+				client := gpt3.NewClient(configmap.OpenaiApikey)
+				resp, err := client.Completion(context.Background(), gpt3.CompletionRequest{
+					Prompt:    []string{m.ReplyTo.Text},
+					MaxTokens: gpt3.IntPtr(30),
+					Stop:      []string{"."},
+				})
+				if err == nil {
+					b.Reply(m, resp.Choices[0].Text)
+				} else {
+					b.Reply(m, "Error occurred :(( details: \n"+err.Error())
+				}
+			}
+
+		}
+
 	})
 
 	return b

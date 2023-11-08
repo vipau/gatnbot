@@ -6,13 +6,14 @@ import (
 )
 
 type Settings struct {
-	Timezone string  `hcl:"timezone"`
-	Apiurl   string  `hcl:"apiurl"`
-	Bottoken string  `hcl:"bottoken"`
-	Chatid   []int64 `hcl:"chatid"`
-	Adminid  []int64 `hcl:"adminid"`
-	Ouremail string  `hcl:"ouremail"`
-	Linksmsg string  `hcl:"linksmsg"`
+	Timezone     string  `hcl:"timezone"`
+	Apiurl       string  `hcl:"apiurl"`
+	Bottoken     string  `hcl:"bottoken"`
+	Chatid       []int64 `hcl:"chatid"`
+	Adminid      []int64 `hcl:"adminid"`
+	Ouremail     string  `hcl:"ouremail"`
+	OpenaiApikey string  `hcl:"openaiapikey"`
+	Linksmsg     string  `hcl:"linksmsg"`
 }
 
 // LoadSettings unmarshals the HCL config file and returns our Settings.
