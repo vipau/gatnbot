@@ -47,7 +47,8 @@ func CheckAndForward(ourmail string, chatids []int64, b *tb.Bot) {
 		md := inboxer.GetPartialMetadata(msg)
 		message := "<b><u>Ao c'è posta per Gattini</u></b>" + string('\n') + string('\n')
 		message += fmt.Sprintf("<i><u>Probabilmente arriva da:</u></i>\n%s\n\n", html.EscapeString(md.From))
-		message += fmt.Sprintf("<i><u>Il titolo dice:</u></i>\n%s", html.EscapeString(md.Subject))
+		message += fmt.Sprintf("<i><u>Il titolo dice:</u></i>\n%s\n\n", html.EscapeString(md.Subject))
+		message += "<i><u>Se hai perso accesso a Telegram\n o per trollare con le newsletter:</u></i>\naiuto@gattini.one"
 
 		// send to every group in array
 		for _, i := range chatids {
