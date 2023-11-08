@@ -62,6 +62,12 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			b.Send(m.Chat, string(out))
 		}
 	})
+	
+	b.Handle("/admincheck", func(m *tb.Message) {
+		if settings.Has(configmap.Adminid, m.Chat.ID) {
+			b.Send(m.Chat, "you win!" )
+		}
+	})
 
 	return b
 }
