@@ -1,7 +1,7 @@
 package settings
 
 import (
-    	"github.com/hashicorp/hcl/v2/hclsimple"
+	"github.com/hashicorp/hcl/v2/hclsimple"
 	"log"
 )
 
@@ -22,7 +22,7 @@ func LoadSettings(filename string) Settings {
 		log.Fatalf("Failed to load configuration: %s", err)
 	}
 
-//	log.Printf("Configuration is %#v", Config)
+	//	log.Printf("Configuration is %#v", Config)
 	return Config
 }
 
