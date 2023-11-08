@@ -3,8 +3,9 @@ package fakernews_mod
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
@@ -21,7 +22,7 @@ type hnStory struct {
 	Title string `json:"title"`
 }
 
-// refresh model with the latest 500 HN stories
+// TrainModel refreshes model with the latest 500 HN stories
 func TrainModel() {
 	chain, err := buildModel()
 	if err != nil {
@@ -69,7 +70,7 @@ func buildModel() (*gomarkov.Chain, error) {
 // load markov model from file
 func loadModel() (*gomarkov.Chain, error) {
 	var chain gomarkov.Chain
-	data, err := ioutil.ReadFile("model.json")
+	data, err := os.ReadFile("model.json")
 	if err != nil {
 		return &chain, err
 	}
@@ -88,7 +89,7 @@ func fetchHNTopStories() ([]int, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func fetchHNStory(storyID int) (hnStory, error) {
 		return story, err
 	}
 	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return story, err
 	}
@@ -116,7 +117,7 @@ func fetchHNStory(storyID int) (hnStory, error) {
 // save markov model to file
 func saveModel(chain *gomarkov.Chain) {
 	jsonObj, _ := json.Marshal(chain)
-	err := ioutil.WriteFile("model.json", jsonObj, 0644)
+	err := os.WriteFile("model.json", jsonObj, 0644)
 	if err != nil {
 		fmt.Println(err)
 	}

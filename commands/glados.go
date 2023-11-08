@@ -1,13 +1,13 @@
 package commands
 
 import (
-	"io/ioutil"
 	"log"
 	"math/rand"
+	"os"
 )
 
 func GetGladosVoiceline() string {
-	files, err := ioutil.ReadDir("glados")
+	files, err := os.ReadDir("glados")
 	if err != nil {
 		log.Fatal(err)
 	}

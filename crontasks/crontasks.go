@@ -3,7 +3,7 @@ package crontasks
 import (
 	"github.com/go-co-op/gocron"
 	"github.com/prometheus/common/log"
-	fakernews_mod "github.com/vipau/gatnbot/fakernews-mod"
+	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
 	"github.com/vipau/gatnbot/settings"
 	tb "gopkg.in/telebot.v3"
 	"time"
@@ -41,7 +41,7 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	s.Every(1).Day().At("13:12").Do(func() { sendToAllChats("A.C.A.B.", config, b) })
 
 	// reload top 500 hacker news articles for the markov chain at midnight
-	s.Every(1).Day().At("00:00").Do(func() { fakernews_mod.TrainModel() })
+	s.Every(1).Day().At("00:00").Do(func() { fakernewsmod.TrainModel() })
 
 	// start scheduler asynchronously
 	log.Info("Starting asynchronous scheduler...")
