@@ -59,15 +59,20 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		return nil
 	})
 
+	b.Handle("/myid", func(c tb.Context) error {
+		opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+		_, err = b.Send(c.Message().Chat, "Your ID: `"+strconv.FormatInt(c.Sender().ID, 10)+"`", opts)
+		return err
+	})
+
 	b.Handle("/links", func(c tb.Context) error {
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 			_, err = b.Send(c.Message().Chat, configmap.Linksmsg, opts)
-			return err
-		} else {
-			return nil
+			checkPrintErr(err)
 		}
+		return nil
 	})
 
 	b.Handle("/turbo", func(c tb.Context) error {
@@ -77,10 +82,9 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			vmax := 57
 			rando := rand.Intn(vmax-vmin+1) + vmin
 			_, err = b.Send(c.Message().Chat, fmt.Sprintf("this chat is now cringe-protected for %d minutes thanks the power of TURBO", rando))
-			return err
-		} else {
-			return nil
+			checkPrintErr(err)
 		}
+		return nil
 	})
 
 	b.Handle("/hackernews", func(c tb.Context) error {
@@ -184,7 +188,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
-							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
+							"```\n\nGatnbot note: If the above says \"context deadline exceeded\", \"Service Unavailable\" or \"Bad gateway\" then the API timed out or is down, try again (possibly later).", opts)
 						checkPrintErr(err)
 					}
 				}
@@ -238,7 +242,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
-							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
+							"```\n\nGatnbot note: If the above says \"context deadline exceeded\", \"Service Unavailable\" or \"Bad gateway\" then the API timed out or is down, try again (possibly later).", opts)
 						checkPrintErr(err)
 					}
 				}
