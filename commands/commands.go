@@ -5,14 +5,16 @@ import (
 	"context"
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
-	fakernews_mod "github.com/paualberto/gatnbot/fakernews-mod"
-	"github.com/paualberto/gatnbot/settings"
-	tb "gopkg.in/tucnak/telebot.v2"
-	"io/ioutil"
+	"github.com/vipau/gatnbot/crontasks"
+	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
+	"github.com/vipau/gatnbot/settings"
+	tb "gopkg.in/telebot.v3"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -36,62 +38,78 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 
 	// start handling our custom commands
 
-	b.Handle(tb.OnText, func(m *tb.Message) {
-		// auto delete messages from Hacker News channel
-		// they spam my tech group
-		if m.OriginalChat.ID == -1001099505434 {
-			b.Delete(m)
+	b.Handle(tb.OnText, func(c tb.Context) error {
+		// All the text messages that weren't
+		// captured by existing handlers.
+		var (
+			user = c.Sender()
+		)
+
+		// Print user ID and username on terminal
+		if !settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) {
+			fmt.Println("User ID: " + strconv.FormatInt(user.ID, 10) + " username: " + user.Username)
 		}
+		return nil
 	})
 
-	b.Handle("/links", func(m *tb.Message) {
-		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
-			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
+	b.Handle("/links", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-			b.Send(m.Chat, configmap.Linksmsg, opts)
+			_, err = b.Send(c.Message().Chat, configmap.Linksmsg, opts)
+			return err
+		} else {
+			return nil
 		}
 	})
 
-	b.Handle("/turbo", func(m *tb.Message) {
-		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
-			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
-			rand.Seed(time.Now().UnixNano())
-			min := 4
-			max := 57
-			rando := rand.Intn(max-min+1) + min
-			b.Send(m.Chat, fmt.Sprintf("this chat is now cringe-protected for %d minutes thanks the power of TURBO", rando))
+	b.Handle("/turbo", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+			vmin := 4
+			vmax := 57
+			rando := rand.Intn(vmax-vmin+1) + vmin
+			_, err = b.Send(c.Message().Chat, fmt.Sprintf("this chat is now cringe-protected for %d minutes thanks the power of TURBO", rando))
+			return err
+		} else {
+			return nil
 		}
 	})
 
-	b.Handle("/hackernews", func(m *tb.Message) {
-		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
-			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
+	b.Handle("/hackernews", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if _, err := os.Stat("model.json"); err == nil {
 			} else if os.IsNotExist(err) {
-				fakernews_mod.TrainModel()
+				fakernewsmod.TrainModel()
 			} // train the model first if it doesn't exist
 
-			out := fakernews_mod.GenerateNews()
-			b.Send(m.Chat, string(out))
+			out := fakernewsmod.GenerateNews()
+			_, err = b.Send(c.Message().Chat, out)
+			if err != nil {
+				log.Fatal(err)
+			}
+			return nil
 		}
+		return nil
 	})
 
-	b.Handle("/supercazzola", func(m *tb.Message) {
-		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
-			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
+	b.Handle("/supercazzola", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			// query the BS generator
 			resp, err := http.Get("http://ftrv.se/bullshit")
 			defer resp.Body.Close()
 			if err != nil {
 				errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
 				fmt.Println(errmsg)
-				b.Send(m.Chat, errmsg)
+				b.Send(c.Message().Chat, errmsg)
 			} else {
-				body, err := ioutil.ReadAll(resp.Body)
+				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
 					fmt.Println(errmsg)
-					b.Send(m.Chat, errmsg)
+					b.Send(c.Message().Chat, errmsg)
 				} else {
 					// here we enter a loop to strip the HTML tags from the response
 					scanner := bufio.NewScanner(strings.NewReader(string(body)))
@@ -99,36 +117,140 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						line := scanner.Text()
 						// simply check that the line does not start with <
 						if !strings.HasPrefix(line, "<") {
-							b.Send(m.Chat, line)
+							b.Send(c.Message().Chat, line)
 						}
 					}
 				}
 
 			}
 		}
+		return nil
 	})
 
-	b.Handle("/gpt3", func(m *tb.Message) {
-		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
-			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
-			if !m.IsReply() {
-				b.Reply(m, "Need to reply to a message to use /gpt3")
+	b.Handle("/gpt3", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+			if !c.Message().IsReply() {
+				b.Reply(c.Message(), "Need to reply to a message to use /gpt3")
 			} else {
-				client := gpt3.NewClient(configmap.OpenaiApikey)
-				resp, err := client.Completion(context.Background(), gpt3.CompletionRequest{
-					Prompt:    []string{m.ReplyTo.Text},
-					MaxTokens: gpt3.IntPtr(60),
-					Stop:      []string{"."},
-				})
-				if err == nil {
-					b.Reply(m, resp.Choices[0].Text)
+				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-3.5-turbo"), gpt3.WithTimeout(45*time.Second))
+				if len(c.Message().ReplyTo.Text) > 2048 {
+					b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
 				} else {
-					b.Reply(m, "Error occurred :(( details: \n"+err.Error())
+					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
+						Messages: []gpt3.ChatCompletionRequestMessage{
+							{
+								Role:    "system",
+								Content: "",
+							},
+							{
+								Role:    "user",
+								Content: c.Message().ReplyTo.Text,
+							},
+						},
+						//					Functions:	  nil,
+						Model: "gpt-3.5-turbo",
+						//						MaxTokens: 512,
+						//Stop:      []string{"."},
+						//					Temperature:      gpt3.Float32Ptr(0.7),
+						//					TopP:             gpt3.Float32Ptr(1),
+						//					N:                gpt3.Float32Ptr(1),
+						//					PresencePenalty:  0,
+						//					FrequencyPenalty: 0,
+					})
+					if err == nil {
+						if resp.Choices[0].Message.Content == "" {
+							b.Reply(c.Message(), "gatnbot warning: response is empty!")
+						} else {
+							b.Reply(c.Message(), resp.Choices[0].Message.Content)
+						}
+					} else {
+						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+						b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
+							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
+					}
 				}
 			}
 
 		}
+		return nil
+	})
 
+	b.Handle("/gpt4", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
+			if !c.Message().IsReply() {
+				b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
+			} else {
+				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-4-1106-preview"))
+				if len(c.Message().ReplyTo.Text) > 512 {
+					b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
+				} else {
+					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
+						Messages: []gpt3.ChatCompletionRequestMessage{
+							{
+								Role:    "system",
+								Content: "You are a bot in a group of people called Gattini. Be the most helpful but concise.",
+							},
+							{
+								Role:    "user",
+								Content: c.Message().ReplyTo.Text,
+							},
+						},
+						//					Functions:	  nil,
+						Model: "gpt-4-1106-preview",
+						//						MaxTokens: 96,
+						//Stop:      []string{"."},
+						//					Temperature:      gpt3.Float32Ptr(0.7),
+						//					TopP:             gpt3.Float32Ptr(1),
+						//					N:                gpt3.Float32Ptr(1),
+						//					PresencePenalty:  0,
+						//					FrequencyPenalty: 0,
+					})
+					if err == nil {
+						if resp.Choices[0].Message.Content == "" {
+							b.Reply(c.Message(), "gatnbot warning: response is empty!")
+						} else {
+							b.Reply(c.Message(), resp.Choices[0].Message.Content)
+						}
+					} else {
+						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+						b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
+							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
+					}
+				}
+			}
+
+		} else {
+			b.Reply(c.Message(), "Error: You are not authorized to use GPT4 in this chat :(\n"+
+				"Try /gpt3 here, or ask the admin for access to GPT4")
+		}
+		return nil
+	})
+
+	b.Handle("/glados", func(c tb.Context) error {
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+			gladosLine := GetGladosVoiceline()
+			a := &tb.Audio{File: tb.FromDisk("glados/" + gladosLine), Title: gladosLine, Performer: "GLaDOS"}
+			_, err := b.Send(c.Message().Chat, a)
+			if err != nil {
+				fmt.Println(err.Error())
+				fmt.Println(gladosLine)
+				b.Send(c.Message().Chat, err.Error()+" "+gladosLine)
+			}
+		}
+		return nil
+	})
+
+	// manual viernes/sabado invocation
+	b.Handle("/viernes", func(c tb.Context) error {
+		_, err = b.Send(c.Message().Chat, crontasks.Viernes)
+		return err
+	})
+	b.Handle("/sabado", func(c tb.Context) error {
+		_, err = b.Send(c.Message().Chat, crontasks.Sabado)
+		return err
 	})
 
 	return b

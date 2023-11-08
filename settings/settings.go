@@ -10,7 +10,8 @@ type Settings struct {
 	Apiurl       string  `hcl:"apiurl"`
 	Bottoken     string  `hcl:"bottoken"`
 	Chatid       []int64 `hcl:"chatid"`
-	Adminid      []int64 `hcl:"adminid"`
+	Usersid      []int64 `hcl:"usersid"`
+	Gpt4id       []int64 `hcl:"gpt4id"`
 	Ouremail     string  `hcl:"ouremail"`
 	OpenaiApikey string  `hcl:"openaiapikey"`
 	Linksmsg     string  `hcl:"linksmsg"`

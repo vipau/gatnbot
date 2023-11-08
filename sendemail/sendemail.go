@@ -6,7 +6,7 @@ import (
 	"gitlab.com/hartsfield/gmailAPI"
 	"gitlab.com/hartsfield/inboxer"
 	gmail "google.golang.org/api/gmail/v1"
-	tb "gopkg.in/tucnak/telebot.v2"
+	tb "gopkg.in/telebot.v3"
 	"html"
 )
 

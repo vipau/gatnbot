@@ -1,16 +1,16 @@
-package commands 
+package commands
 
 import (
-"log"
-    "math/rand"
-    "io/ioutil"
+	"io/ioutil"
+	"log"
+	"math/rand"
 )
 
 func GetGladosVoiceline() string {
-    files, err := ioutil.ReadDir("glados")
-    if err != nil {
-        log.Fatal(err)
-    }
+	files, err := ioutil.ReadDir("glados")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    return files[rand.Intn(len(files))].Name()
+	return files[rand.Intn(len(files))].Name()
 }
