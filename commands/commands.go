@@ -109,7 +109,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				client := gpt3.NewClient(configmap.OpenaiApikey)
 				resp, err := client.Completion(context.Background(), gpt3.CompletionRequest{
 					Prompt:    []string{m.ReplyTo.Text},
-					MaxTokens: gpt3.IntPtr(30),
+					MaxTokens: gpt3.IntPtr(60),
 					Stop:      []string{"."},
 				})
 				if err == nil {
