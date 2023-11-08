@@ -11,6 +11,7 @@ import (
 	tb "gopkg.in/telebot.v3"
 	"io"
 	"log"
+	"log/slog"
 	"math/rand"
 	"net/http"
 	"os"
@@ -18,6 +19,12 @@ import (
 	"strings"
 	"time"
 )
+
+func checkErr(err error) {
+	if err != nil {
+		slog.Error(err.Error())
+	}
+}
 
 // HandleCommands sets endpoints handled by the bot
 func HandleCommands(configmap settings.Settings) *tb.Bot {
@@ -99,17 +106,22 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			// query the BS generator
 			resp, err := http.Get("http://ftrv.se/bullshit")
-			defer resp.Body.Close()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				checkErr(err)
+			}(resp.Body)
 			if err != nil {
 				errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
 				fmt.Println(errmsg)
-				b.Send(c.Message().Chat, errmsg)
+				_, err = b.Send(c.Message().Chat, errmsg)
+				checkErr(err)
 			} else {
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
 					fmt.Println(errmsg)
-					b.Send(c.Message().Chat, errmsg)
+					_, err = b.Send(c.Message().Chat, errmsg)
+					checkErr(err)
 				} else {
 					// here we enter a loop to strip the HTML tags from the response
 					scanner := bufio.NewScanner(strings.NewReader(string(body)))
@@ -117,7 +129,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						line := scanner.Text()
 						// simply check that the line does not start with <
 						if !strings.HasPrefix(line, "<") {
-							b.Send(c.Message().Chat, line)
+							_, err = b.Send(c.Message().Chat, line)
+							checkErr(err)
 						}
 					}
 				}
@@ -131,11 +144,13 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
-				b.Reply(c.Message(), "Need to reply to a message to use /gpt3")
+				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt3")
+				checkErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-3.5-turbo"), gpt3.WithTimeout(45*time.Second))
 				if len(c.Message().ReplyTo.Text) > 2048 {
-					b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
+					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
+					checkErr(err)
 				} else {
 					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 						Messages: []gpt3.ChatCompletionRequestMessage{
@@ -160,14 +175,17 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
-							b.Reply(c.Message(), "gatnbot warning: response is empty!")
+							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
+							checkErr(err)
 						} else {
-							b.Reply(c.Message(), resp.Choices[0].Message.Content)
+							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
+							checkErr(err)
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
+						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
 							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
+						checkErr(err)
 					}
 				}
 			}
@@ -180,11 +198,13 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
-				b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
+				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
+				checkErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-4-1106-preview"))
 				if len(c.Message().ReplyTo.Text) > 512 {
-					b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
+					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
+					checkErr(err)
 				} else {
 					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 						Messages: []gpt3.ChatCompletionRequestMessage{
@@ -209,21 +229,25 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
-							b.Reply(c.Message(), "gatnbot warning: response is empty!")
+							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
+							checkErr(err)
 						} else {
-							b.Reply(c.Message(), resp.Choices[0].Message.Content)
+							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
+							checkErr(err)
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
+						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
 							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
+						checkErr(err)
 					}
 				}
 			}
 
 		} else {
-			b.Reply(c.Message(), "Error: You are not authorized to use GPT4 in this chat :(\n"+
+			_, err = b.Reply(c.Message(), "Error: You are not authorized to use GPT4 in this chat :(\n"+
 				"Try /gpt3 here, or ask the admin for access to GPT4")
+			checkErr(err)
 		}
 		return nil
 	})
@@ -237,7 +261,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			if err != nil {
 				fmt.Println(err.Error())
 				fmt.Println(gladosLine)
-				b.Send(c.Message().Chat, err.Error()+" "+gladosLine)
+				_, err = b.Send(c.Message().Chat, err.Error()+" "+gladosLine)
+				checkErr(err)
 			}
 		}
 		return nil

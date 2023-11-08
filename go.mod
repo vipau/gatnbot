@@ -7,6 +7,5 @@ require (
 	github.com/go-co-op/gocron v1.6.2
 	github.com/hashicorp/hcl/v2 v2.10.1
 	github.com/mb-14/gomarkov v0.0.0-20210216094942-a5b484cc0243
-	github.com/prometheus/common v0.26.0
 	gopkg.in/telebot.v3 v3.1.4
 )
