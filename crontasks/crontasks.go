@@ -14,8 +14,8 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	for i := range config.Chatid {
 
 		// make a CET scheduler
-		cet, _ := time.LoadLocation("Europe/Rome")
-		s := gocron.NewScheduler(cet)
+		tmz, _ := time.LoadLocation(config.Timezone)
+		s := gocron.NewScheduler(tmz)
 
 		// its friday then
 		s.Every(1).Friday().At("09:00").Do(func() { b.Send(&tb.Chat{ID: config.Chatid[i]}, "https://www.youtube.com/watch?v=1AnG04qnLqI") })
