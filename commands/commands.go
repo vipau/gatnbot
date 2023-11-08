@@ -2,7 +2,10 @@ package commands
 
 import (
 	"bufio"
+<<<<<<< HEAD
 	"context"
+=======
+>>>>>>> refs/rewritten/Add-GPT3-completion
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
 	fakernews_mod "github.com/paualberto/gatnbot/fakernews-mod"
