@@ -12,6 +12,7 @@ import (
 func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	// for every group in the array of IDs
 	for _, i := range config.Chatid {
+		// get group instance from ID
 		group := tb.ChatID(i)
 
 		// make a scheduler
