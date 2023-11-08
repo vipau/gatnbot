@@ -1,0 +1,12 @@
+timezone = "Europe/Rome"
+apiurl = "https://api.telegram.org"
+bottoken = "123456789:abcdefgh"
+chatid = [ "-09876543210" ]
+adminid = [ "123456789" ]
+ouremail = "youremail@example.org"
+linksmsg = <<EOF
+Here are some links for you:
+
+(Google)[https://google.com]
+(Facebook)[https://example.org]
+EOF
