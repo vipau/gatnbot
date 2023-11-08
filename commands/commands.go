@@ -36,6 +36,14 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 
 	// start handling our custom commands
 
+	b.Handle(tb.OnText, func(m *tb.Message) {
+		// auto delete messages from Hacker News channel
+		// they spam my tech group
+		if m.OriginalChat.ID == -1001099505434 {
+			b.Delete(m)
+		}
+	})
+
 	b.Handle("/links", func(m *tb.Message) {
 		if settings.ListContainsID(configmap.Chatid, m.Chat.ID) ||
 			settings.ListContainsID(configmap.Adminid, m.Chat.ID) {
