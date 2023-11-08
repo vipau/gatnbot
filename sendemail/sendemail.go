@@ -50,8 +50,10 @@ func CheckAndForward(ourmail string, chatids []int64, b *tb.Bot) {
 		message += fmt.Sprintf("<i><u>Il titolo dice:</u></i>\n%s", html.EscapeString(md.Subject))
 
 		// send to every group in array
-		for i := range chatids {
-			b.Send(&tb.Chat{ID: chatids[i]}, message, opts)
+		for _, i := range chatids {
+			group := tb.ChatID(i)
+			b.Send(group, message, opts)
+			
 		}
 
 		// mark as read on server
