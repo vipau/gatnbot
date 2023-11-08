@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func checkErr(err error) {
+func checkPrintErr(err error) {
 	if err != nil {
 		slog.Error(err.Error())
 	}
@@ -23,7 +23,7 @@ func sendToAllChats(message interface{}, config settings.Settings, b *tb.Bot) {
 		// get group instance from ID
 		group := tb.ChatID(i)
 		_, err := b.Send(group, message)
-		checkErr(err)
+		checkPrintErr(err)
 	}
 }
 
@@ -34,29 +34,29 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 
 	// important
 	_, err := s.Every(1).Day().At("9:00").Do(func() { sendToAllChats("Gattini(tm) reminder: Have you drank water and stretched?", config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 	_, err = s.Every(1).Day().At("13:00").Do(func() { sendToAllChats("Gattini(tm) reminder: Have you drank water and stretched?", config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 	_, err = s.Every(1).Day().At("16:30").Do(func() { sendToAllChats("Gattini(tm) reminder: Have you drank water and stretched?", config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 
 	// its friday then
 	_, err = s.Every(1).Friday().At("08:55").Do(func() { sendToAllChats("https://www.youtube.com/watch?v=1AnG04qnLqI", config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 	_, err = s.Every(1).Friday().At("11:00").Do(func() { sendToAllChats(Viernes, config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 
 	// SABADOOOOOO
 	_, err = s.Every(1).Saturday().At("10:00").Do(func() { sendToAllChats(Sabado, config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 
 	// misc shotpost
 	_, err = s.Every(1).Day().At("13:12").Do(func() { sendToAllChats("A.C.A.B.", config, b) })
-	checkErr(err)
+	checkPrintErr(err)
 
 	// reload top 500 hacker news articles for the markov chain at midnight
 	_, err = s.Every(1).Day().At("00:00").Do(func() { fakernewsmod.TrainModel() })
-	checkErr(err)
+	checkPrintErr(err)
 
 	// start scheduler asynchronously
 	slog.Info("Starting asynchronous scheduler...")

@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-func checkErr(err error) {
+func checkPrintErr(err error) {
 	if err != nil {
 		slog.Error(err.Error())
 	}
@@ -108,20 +108,20 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			resp, err := http.Get("http://ftrv.se/bullshit")
 			defer func(Body io.ReadCloser) {
 				err := Body.Close()
-				checkErr(err)
+				checkPrintErr(err)
 			}(resp.Body)
 			if err != nil {
 				errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
 				fmt.Println(errmsg)
 				_, err = b.Send(c.Message().Chat, errmsg)
-				checkErr(err)
+				checkPrintErr(err)
 			} else {
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
 					fmt.Println(errmsg)
 					_, err = b.Send(c.Message().Chat, errmsg)
-					checkErr(err)
+					checkPrintErr(err)
 				} else {
 					// here we enter a loop to strip the HTML tags from the response
 					scanner := bufio.NewScanner(strings.NewReader(string(body)))
@@ -130,7 +130,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						// simply check that the line does not start with <
 						if !strings.HasPrefix(line, "<") {
 							_, err = b.Send(c.Message().Chat, line)
-							checkErr(err)
+							checkPrintErr(err)
 						}
 					}
 				}
@@ -145,12 +145,12 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
 				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt3")
-				checkErr(err)
+				checkPrintErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-3.5-turbo"), gpt3.WithTimeout(45*time.Second))
 				if len(c.Message().ReplyTo.Text) > 2048 {
 					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
-					checkErr(err)
+					checkPrintErr(err)
 				} else {
 					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 						Messages: []gpt3.ChatCompletionRequestMessage{
@@ -176,16 +176,16 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
 							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
-							checkErr(err)
+							checkPrintErr(err)
 						} else {
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-							checkErr(err)
+							checkPrintErr(err)
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
 							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
-						checkErr(err)
+						checkPrintErr(err)
 					}
 				}
 			}
@@ -199,12 +199,12 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
 				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
-				checkErr(err)
+				checkPrintErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-4-1106-preview"))
 				if len(c.Message().ReplyTo.Text) > 512 {
 					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
-					checkErr(err)
+					checkPrintErr(err)
 				} else {
 					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 						Messages: []gpt3.ChatCompletionRequestMessage{
@@ -230,16 +230,16 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
 							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
-							checkErr(err)
+							checkPrintErr(err)
 						} else {
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-							checkErr(err)
+							checkPrintErr(err)
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
 							"```\n\nGatnbot note: If the above says \"context deadline exceeded\" then the API timed out, try again (possibly later).", opts)
-						checkErr(err)
+						checkPrintErr(err)
 					}
 				}
 			}
@@ -247,7 +247,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		} else {
 			_, err = b.Reply(c.Message(), "Error: You are not authorized to use GPT4 in this chat :(\n"+
 				"Try /gpt3 here, or ask the admin for access to GPT4")
-			checkErr(err)
+			checkPrintErr(err)
 		}
 		return nil
 	})
@@ -262,7 +262,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				fmt.Println(err.Error())
 				fmt.Println(gladosLine)
 				_, err = b.Send(c.Message().Chat, err.Error()+" "+gladosLine)
-				checkErr(err)
+				checkPrintErr(err)
 			}
 		}
 		return nil
