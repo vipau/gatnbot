@@ -115,16 +115,18 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			}(resp.Body)
 			if err != nil {
-				errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
+				opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+				errmsg := "lol an error occurred\ncheck it out bro\n\n```error\n" + err.Error() + "```"
 				fmt.Println(errmsg)
-				_, err = b.Send(c.Message().Chat, errmsg)
+				_, err = b.Send(c.Message().Chat, errmsg, opts)
 				checkPrintErr(err)
 			} else {
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
-					errmsg := "lol an error occurred\ncheck it out bro\n\n" + err.Error()
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+					errmsg := "lol an error occurred\ncheck it out bro\n\n```error\n" + err.Error() + "```"
 					fmt.Println(errmsg)
-					_, err = b.Send(c.Message().Chat, errmsg)
+					_, err = b.Send(c.Message().Chat, errmsg, opts)
 					checkPrintErr(err)
 				} else {
 					// here we enter a loop to strip the HTML tags from the response
@@ -263,9 +265,10 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			a := &tb.Audio{File: tb.FromDisk("glados/" + gladosLine), Title: gladosLine, Performer: "GLaDOS"}
 			_, err := b.Send(c.Message().Chat, a)
 			if err != nil {
-				fmt.Println(err.Error())
-				fmt.Println(gladosLine)
-				_, err = b.Send(c.Message().Chat, err.Error()+" "+gladosLine)
+				slog.Error(err.Error())
+				slog.Error(gladosLine)
+				opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+				_, err = b.Send(c.Message().Chat, "Error occurred while playing "+gladosLine+" :( details: \n\n```error\n"+err.Error()+"```", opts)
 				checkPrintErr(err)
 			}
 		}
