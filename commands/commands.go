@@ -187,7 +187,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
+						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go"+err.Error()+
 							"```\n\nGatnbot note: If the above says \"context deadline exceeded\", \"Service Unavailable\" or \"Bad gateway\" then the API timed out or is down, try again (possibly later).", opts)
 						checkPrintErr(err)
 					}
@@ -241,7 +241,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```"+err.Error()+
+						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go"+err.Error()+
 							"```\n\nGatnbot note: If the above says \"context deadline exceeded\", \"Service Unavailable\" or \"Bad gateway\" then the API timed out or is down, try again (possibly later).", opts)
 						checkPrintErr(err)
 					}
