@@ -238,7 +238,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
 							checkPrintErr(err)
 						} else {
-							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
+							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
 							checkPrintErr(err)
 						}
 					} else {
