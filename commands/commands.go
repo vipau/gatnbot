@@ -214,7 +214,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						Messages: []gpt3.ChatCompletionRequestMessage{
 							{
 								Role:    "system",
-								Content: "You are a bot in a group of people called Gattini. Be the most helpful but concise.",
+								Content: "You are GattiniBot, a bot in a group of people called Gattini. Be the most helpful but concise.",
 							},
 							{
 								Role:    "user",
