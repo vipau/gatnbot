@@ -217,8 +217,9 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							{
 								Role: "system",
 								Content: "You are GattiniBot, a bot in a group of people called Gattini. Be the most helpful but concise." +
-									" Output simple HTML. You can only make use of the HTML tags a, b, i, s, u, code (for monospace text)." +
-									" If you need a code block, use 'pre'. Do not use any other tag, including br.",
+									"Output Markdown, but using single * for *bold* and single _ for _italics_.",
+								//" Output simple HTML. You can only make use of the HTML tags a, b, i, s, u, code (for monospace text)." +
+								//" Do NOT use ANY other tag or your message will not go through.",
 							},
 							{
 								Role:    "user",
@@ -240,7 +241,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
 							checkPrintErr(err)
 						} else {
-							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
+							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
 							checkPrintErr(err)
 						}
