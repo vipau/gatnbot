@@ -32,12 +32,14 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	tmz, _ := time.LoadLocation(config.Timezone)
 	s := gocron.NewScheduler(tmz)
 
+	warning := "Gattini(tm) reminder: Have you drunk water and stretched?"
+
 	// important
-	_, err := s.Every(1).Day().At("9:00").Do(func() { sendToAllChats("Gattini(tm) reminder: Have you drank water and stretched?", config, b) })
+	_, err := s.Every(1).Monday().Tuesday().Wednesday().Thursday().Friday().
+		At("9:00").At("13:00").At("16:30").Do(func() { sendToAllChats(warning, config, b) })
 	checkPrintErr(err)
-	_, err = s.Every(1).Day().At("13:00").Do(func() { sendToAllChats("Gattini(tm) reminder: Have you drank water and stretched?", config, b) })
-	checkPrintErr(err)
-	_, err = s.Every(1).Day().At("16:30").Do(func() { sendToAllChats("Gattini(tm) reminder: Have you drank water and stretched?", config, b) })
+	_, err = s.Every(1).Saturday().Sunday().
+		At("14:30").Do(func() { sendToAllChats(warning, config, b) })
 	checkPrintErr(err)
 
 	// its friday then
