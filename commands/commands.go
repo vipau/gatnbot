@@ -190,8 +190,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go\n"+err.Error()+
-							"```\n\nGatnbot note: If the above says \"context deadline exceeded\", \"Service Unavailable\" or \"Bad gateway\" then the API timed out or is down, try again (possibly later).", opts)
-						checkPrintErr(err)
+							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt or try again later. \n"+
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", opts)						checkPrintErr(err)
 					}
 				}
 			}
@@ -217,7 +217,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							{
 								Role: "system",
 								Content: "You are GattiniBot, a bot in a group of people called Gattini. Be the most helpful but concise." +
-									"Output Markdown, but using single * for *bold* and single _ for _italics_.",
+									"Output Markdown if formatting is needed, but using single * for *bold* and single _ for _italics_.",
 								//" Output simple HTML. You can only make use of the HTML tags a, b, i, s, u, code (for monospace text)." +
 								//" Do NOT use ANY other tag or your message will not go through.",
 							},
@@ -248,7 +248,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go\n"+err.Error()+
-							"```\n\nGatnbot note: If the above says \"context deadline exceeded\", \"Service Unavailable\" or \"Bad gateway\" then the API timed out or is down, try again (possibly later).", opts)
+							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt or try again later. \n"+
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", opts)
 						checkPrintErr(err)
 					}
 				}
