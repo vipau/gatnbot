@@ -244,7 +244,10 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						} else {
 							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
-							checkPrintErr(err)
+							if err != nil {
+								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```")
+								checkPrintErr(err2)
+							}
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
