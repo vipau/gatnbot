@@ -185,7 +185,10 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							checkPrintErr(err)
 						} else {
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-							checkPrintErr(err)
+							if err != nil {
+								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```")
+								checkPrintErr(err2)
+							}
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
