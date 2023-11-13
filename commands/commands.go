@@ -186,7 +186,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						} else {
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
 							if err != nil {
-								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```")
+								opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```", opts)
 								checkPrintErr(err2)
 							}
 						}
@@ -248,7 +249,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
 							if err != nil {
-								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```")
+								optsMd := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```", optsMd)
 								checkPrintErr(err2)
 							}
 						}
