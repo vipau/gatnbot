@@ -35,7 +35,7 @@ func findPrintableName(u *tb.User) string {
 	}
 }
 
-func returnFirstFragment(path string) string {
+func returnFragments(path string) []string {
 	//This cuts off the leading forward slash.
 	if strings.HasPrefix(path, "/") {
 		path = path[1:]
@@ -47,7 +47,7 @@ func returnFirstFragment(path string) string {
 	}
 	//We need to isolate the individual components of the path.
 	components := strings.Split(path, "/")
-	return components[0]
+	return components
 }
 
 // HandleCommands sets endpoints handled by the bot
@@ -96,7 +96,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				// try for instagram
 				if u.Hostname() == "instagram.com" || u.Hostname() == "www.instagram.com" {
 					// if URL is a post or reel
-					if returnFirstFragment(u.Path) == "p" || returnFirstFragment(u.Path) == "reel" {
+					if returnFragments(u.Path)[0] == "p" || returnFragments(u.Path)[0] == "reel" {
 						u.Host = "ddinstagram.com"
 						b.Delete(c.Message())
 						q := u.Query()
@@ -111,9 +111,34 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 
 				// try for twitter
 				if u.Hostname() == "twitter.com" || u.Hostname() == "www.twitter.com" || u.Hostname() == "x.com" || u.Hostname() == "www.x.com" {
-					u.Host = "fxtwitter.com"
-					b.Delete(c.Message())
-					b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use fxtwitter... wtf\n\n[link]("+u.String()+")", opts)
+					// if URL is not profile (more than 1 path fragment)
+					if len(returnFragments(u.Path)) > 1 {
+						u.Host = "fxtwitter.com"
+						b.Delete(c.Message())
+						q := u.Query()
+						if q.Has("s") {
+							q.Del("s")
+							u.RawQuery = q.Encode()
+						}
+						if q.Has("t") {
+							q.Del("t")
+							u.RawQuery = q.Encode()
+						}
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use fxtwitter... wtf\n\n[link]("+u.String()+")", opts)
+					} else {
+						// if it's a profile, just remove 's' and 't' trackers
+						b.Delete(c.Message())
+						q := u.Query()
+						if q.Has("s") {
+							q.Del("s")
+							u.RawQuery = q.Encode()
+						}
+						if q.Has("t") {
+							q.Del("t")
+							u.RawQuery = q.Encode()
+						}
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not remove s/t trackers from the link... wtf\n\n[link]("+u.String()+")", opts)
+					}
 				}
 
 				// try for youtube
