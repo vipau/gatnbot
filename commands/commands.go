@@ -110,7 +110,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				}
 
 				// try for twitter
-				if u.Hostname() == "twitter.com" || u.Hostname() == "www.twitter.com" {
+				if u.Hostname() == "twitter.com" || u.Hostname() == "www.twitter.com" || u.Hostname() == "x.com" || u.Hostname() == "www.x.com" {
 					u.Host = "fxtwitter.com"
 					b.Delete(c.Message())
 					b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use fxtwitter... wtf\n\n[link]("+u.String()+")", opts)
