@@ -27,12 +27,27 @@ func checkPrintErr(err error) {
 	}
 }
 
-func findPrintableName(c tb.Context) string {
-	if c.Sender().Username == "" {
-		return c.Sender().FirstName + " " + c.Sender().LastName
+func findPrintableName(u *tb.User) string {
+	if u.LastName == "" {
+		return u.FirstName
 	} else {
-		return c.Sender().Username
+		return u.FirstName + " " + u.LastName
 	}
+}
+
+func returnFirstFragment(path string) string {
+	//This cuts off the leading forward slash.
+	if strings.HasPrefix(path, "/") {
+		path = path[1:]
+	}
+	//This cuts off the trailing forward slash.
+	if strings.HasSuffix(path, "/") {
+		cut_off_last_char_len := len(path) - 1
+		path = path[:cut_off_last_char_len]
+	}
+	//We need to isolate the individual components of the path.
+	components := strings.Split(path, "/")
+	return components[0]
 }
 
 // HandleCommands sets endpoints handled by the bot
@@ -61,7 +76,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		// Print user ID and username on terminal, if message doesn't come from group
 		var user = c.Sender()
 		if !settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) {
-			fmt.Println("User ID: " + strconv.FormatInt(user.ID, 10) + " username: " + findPrintableName(c))
+			fmt.Println("User ID: " + strconv.FormatInt(user.ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()))
 		}
 
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
@@ -75,24 +90,30 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			} else {
 				// it's a link
 
-				// send link with the telegram preview
-				opts := &tb.SendOptions{DisableWebPagePreview: false}
+				// send link with the telegram preview and with markdown
+				opts := &tb.SendOptions{DisableWebPagePreview: false, ParseMode: "Markdown"}
 
 				// try for instagram
 				if u.Hostname() == "instagram.com" || u.Hostname() == "www.instagram.com" {
-					u.Host = "ddinstagram.com"
-					b.Delete(c.Message())
-					q := u.Query()
-					q.Del("igshid")
-					u.RawQuery = q.Encode()
-					b.Send(c.Chat(), "From: "+c.Sender().FirstName+" "+c.Sender().LastName+" who did not use ddinstagram and/or remove the 'igshid' tracking tag... wtf\n\n"+u.String(), opts)
+					// if URL is a post or reel
+					if returnFirstFragment(u.Path) == "p" || returnFirstFragment(u.Path) == "reel" {
+						u.Host = "ddinstagram.com"
+						b.Delete(c.Message())
+						q := u.Query()
+						if q.Has("igshid") {
+							q.Del("igshid")
+							u.RawQuery = q.Encode()
+						}
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use ddinstagram and/or remove the 'igshid' tracking tag... wtf\n\n[link]("+u.String()+")", opts)
+
+					}
 				}
 
 				// try for twitter
 				if u.Hostname() == "twitter.com" || u.Hostname() == "www.twitter.com" {
 					u.Host = "fxtwitter.com"
 					b.Delete(c.Message())
-					b.Send(c.Chat(), "From: "+c.Sender().FirstName+" "+c.Sender().LastName+" who did not use fxtwitter... wtf\n\n"+u.String(), opts)
+					b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use fxtwitter... wtf\n\n[link]("+u.String()+")", opts)
 				}
 
 				// try for youtube
@@ -102,7 +123,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						b.Delete(c.Message())
 						q.Del("si")
 						u.RawQuery = q.Encode()
-						b.Send(c.Chat(), "From: "+c.Sender().FirstName+" "+c.Sender().LastName+" who did not use remove the 'si' tracking tag... wtf\n\n"+u.String(), opts)
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use remove the 'si' tracking tag... wtf\n\n[link]("+u.String()+")", opts)
 					}
 				}
 			}
