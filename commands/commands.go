@@ -14,6 +14,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -23,6 +24,14 @@ import (
 func checkPrintErr(err error) {
 	if err != nil {
 		slog.Error(err.Error())
+	}
+}
+
+func findPrintableName(c tb.Context) string {
+	if c.Sender().Username == "" {
+		return c.Sender().FirstName + " " + c.Sender().LastName
+	} else {
+		return c.Sender().Username
 	}
 }
 
@@ -48,13 +57,55 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	b.Handle(tb.OnText, func(c tb.Context) error {
 		// All the text messages that weren't
 		// captured by existing handlers.
-		var (
-			user = c.Sender()
-		)
 
-		// Print user ID and username on terminal
+		// Print user ID and username on terminal, if message doesn't come from group
+		var user = c.Sender()
 		if !settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) {
-			fmt.Println("User ID: " + strconv.FormatInt(user.ID, 10) + " username: " + user.Username)
+			fmt.Println("User ID: " + strconv.FormatInt(user.ID, 10) + " username: " + findPrintableName(c))
+		}
+
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+
+			// Detect if message is a link
+			msg := strings.TrimSpace(c.Message().Text)
+			u, err := url.Parse(msg)
+			if err != nil {
+				return nil
+			} else {
+				// it's a link
+
+				// send link with the telegram preview
+				opts := &tb.SendOptions{DisableWebPagePreview: false}
+
+				// try for instagram
+				if u.Hostname() == "instagram.com" || u.Hostname() == "www.instagram.com" {
+					u.Host = "ddinstagram.com"
+					b.Delete(c.Message())
+					q := u.Query()
+					q.Del("igshid")
+					u.RawQuery = q.Encode()
+					b.Send(c.Chat(), "From: "+c.Sender().FirstName+" "+c.Sender().LastName+" who did not use ddinstagram and/or remove the 'igshid' tracking tag... wtf\n\n"+u.String(), opts)
+				}
+
+				// try for twitter
+				if u.Hostname() == "twitter.com" || u.Hostname() == "www.twitter.com" {
+					u.Host = "fxtwitter.com"
+					b.Delete(c.Message())
+					b.Send(c.Chat(), "From: "+c.Sender().FirstName+" "+c.Sender().LastName+" who did not use fxtwitter... wtf\n\n"+u.String(), opts)
+				}
+
+				// try for youtube
+				if u.Hostname() == "youtube.com" || u.Hostname() == "www.youtube.com" || u.Hostname() == "youtu.be" {
+					q := u.Query()
+					if q.Has("si") {
+						b.Delete(c.Message())
+						q.Del("si")
+						u.RawQuery = q.Encode()
+						b.Send(c.Chat(), "From: "+c.Sender().FirstName+" "+c.Sender().LastName+" who did not use remove the 'si' tracking tag... wtf\n\n"+u.String(), opts)
+					}
+				}
+			}
 		}
 		return nil
 	})
