@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/pandodao/tokenizer-go"
 	"github.com/pkg/errors"
 	"github.com/vipau/gatnbot/crontasks"
 	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
@@ -342,15 +343,26 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						if resp.Choices[0].Message.Content == "" {
 							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 						} else {
+							output := resp.Choices[0].Message.Content
 							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
-							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
-							checkSendErr(err, b, c, true)
+							_, err = b.Reply(c.Message(), output, opts)
+							if err == nil {
+								tin := tokenizer.MustCalToken(c.Message().ReplyTo.Text)
+								tout := tokenizer.MustCalToken(output)
+								pin := float64(tin) * 0.00001
+								pout := float64(tout) * 0.00003
+								opts = &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+								msg := fmt.Sprintf("Input tokens: *%v* ($%v)\nOutput tokens: *%v* ($%v)\nTotal cost: $%v", tin, pin, tout, pout, pin+pout)
+								_, err = b.Send(c.Chat(), msg, opts)
+								checkSendErr(err, b, c, false)
+							} else {
+								checkSendErr(err, b, c, true)
+							}
 						}
 					} else {
 						checkSendErr(err, b, c, true,
 							"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
 								"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
-
 					}
 				}
 			}
