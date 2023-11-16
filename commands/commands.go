@@ -28,13 +28,18 @@ func checkPrintErr(err error) {
 	}
 }
 
-func checkSendErr(err error, b *tb.Bot, c *tb.Chat) {
+func checkSendErr(err error, b *tb.Bot, c tb.Context, isReply bool) {
 	if err != nil {
 		opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 		errmsg := "gatnbot: lol an error occurred\ncheck it out fam\n\n```error\n" + err.Error() + "```"
 		fmt.Println(errmsg)
-		_, err = b.Send(c, errmsg, opts)
-		checkPrintErr(err)
+		if isReply {
+			_, err = b.Reply(c.Message(), errmsg, opts)
+			checkPrintErr(err)
+		} else {
+			_, err = b.Send(c.Chat(), errmsg, opts)
+			checkPrintErr(err)
+		}
 	}
 }
 
@@ -234,11 +239,11 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			}(resp.Body)
 			if err != nil {
-				checkSendErr(err, b, c.Chat())
+				checkSendErr(err, b, c, false)
 			} else {
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
-					checkSendErr(err, b, c.Chat())
+					checkSendErr(err, b, c, false)
 				} else {
 					// here we enter a loop to strip the HTML tags from the response
 					scanner := bufio.NewScanner(strings.NewReader(string(body)))
@@ -292,17 +297,16 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
-							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c.Chat())
+							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 						} else {
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-							checkPrintErr(err)
+							checkSendErr(err, b, c, true)
 						}
 					} else {
-						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go\n"+err.Error()+
+						err2 := fmt.Sprintf("Gatnbot: error occurred :(( details:\n\n```go\n%v\n"+
 							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", opts)
-						checkPrintErr(err)
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", err.Error())
+						checkSendErr(errors.New(err2), b, c, true)
 					}
 				}
 			}
@@ -349,26 +353,24 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
-							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c.Chat())
+							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 						} else {
 							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
-							checkSendErr(err, b, c.Chat())
+							checkSendErr(err, b, c, true)
 						}
 					} else {
-						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go\n"+err.Error()+
-							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt or try again later. \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", opts)
-						checkPrintErr(err)
+						err2 := fmt.Sprintf("Gatnbot: error occurred :(( details:\n\n```go\n%v\n"+
+							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", err.Error())
+						checkSendErr(errors.New(err2), b, c, true)
 					}
 				}
 			}
 
 		} else {
-			_, err = b.Reply(c.Message(), "Error: You are not authorized to use GPT4 in this chat :(\n"+
-				"Try /gpt3 here, or ask the admin for access to GPT4")
-			checkPrintErr(err)
+			checkSendErr(errors.New("Error: You are not authorized to use GPT4 in this chat :(\n"+
+				"Try /gpt3 here, or ask the admin for access to GPT4"), b, c, true)
 		}
 		return nil
 	})
@@ -382,7 +384,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			if err != nil {
 				slog.Error(err.Error())
 				slog.Error(gladosLine)
-				checkSendErr(errors.Wrap(err, "error playing glados line"), b, c.Chat())
+				checkSendErr(errors.Wrap(err, "error playing glados line"), b, c, true)
 			}
 		}
 		return nil
