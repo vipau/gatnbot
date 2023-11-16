@@ -352,7 +352,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 								pin := float64(tin) * 0.00001
 								pout := float64(tout) * 0.00003
 								opts = &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-								msg := fmt.Sprintf("Input tokens: *%v* ($%v)\nOutput tokens: *%v* ($%v)\nTotal cost: $%v", tin, pin, tout, pout, pin+pout)
+								msg := fmt.Sprintf("Input tokens: *%v* ($%.5f)\nOutput tokens: *%v* ($%.5f)\nTotal cost: $%.5f", tin, pin, tout, pout, pin+pout)
 								_, err = b.Send(c.Chat(), msg, opts)
 								checkSendErr(err, b, c, false)
 							} else {
