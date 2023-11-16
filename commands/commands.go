@@ -104,7 +104,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							q.Del("igshid")
 							u.RawQuery = q.Encode()
 						}
-						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use ddinstagram and/or remove the 'igshid' tracking tag... wtf\n\n[link]("+u.String()+")", opts)
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use ddinstagram and/or remove the 'igshid' tracking tag... wtf\n\n"+u.String(), opts)
 
 					}
 				}
@@ -124,7 +124,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							q.Del("t")
 							u.RawQuery = q.Encode()
 						}
-						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use fxtwitter... wtf\n\n[link]("+u.String()+")", opts)
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use fxtwitter... wtf\n\n"+u.String(), opts)
 					} else {
 						// if it's a profile, just remove 's' and 't' trackers
 						b.Delete(c.Message())
@@ -137,7 +137,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							q.Del("t")
 							u.RawQuery = q.Encode()
 						}
-						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not remove s/t trackers from the link... wtf\n\n[link]("+u.String()+")", opts)
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not remove s/t trackers from the link... wtf\n\n"+u.String(), opts)
 					}
 				}
 
@@ -148,7 +148,18 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						b.Delete(c.Message())
 						q.Del("si")
 						u.RawQuery = q.Encode()
-						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not use remove the 'si' tracking tag... wtf\n\n[link]("+u.String()+")", opts)
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not remove the 'si' tracking tag... wtf\n\n"+u.String(), opts)
+					}
+				}
+
+				// try for spotify
+				if u.Hostname() == "open.spotify.com" {
+					q := u.Query()
+					if q.Has("si") {
+						b.Delete(c.Message())
+						q.Del("si")
+						u.RawQuery = q.Encode()
+						b.Send(c.Chat(), "From: *"+findPrintableName(c.Sender())+"* who did not remove the 'si' tracking tag... wtf\n\n"+u.String(), opts)
 					}
 				}
 			}
