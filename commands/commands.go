@@ -28,10 +28,13 @@ func checkPrintErr(err error) {
 	}
 }
 
-func checkSendErr(err error, b *tb.Bot, c tb.Context, isReply bool) {
+func checkSendErr(err error, b *tb.Bot, c tb.Context, isReply bool, outer ...string) {
 	if err != nil {
 		opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-		errmsg := "gatnbot: lol an error occurred\ncheck it out fam\n\n```error\n" + err.Error() + "```"
+		errmsg := "gatnbot: lol an error occurred, check it out yo...\n\n```error\n" + err.Error() + "```"
+		if len(outer) != 0 {
+			errmsg += "\n\n" + outer[0]
+		}
 		fmt.Println(errmsg)
 		if isReply {
 			_, err = b.Reply(c.Message(), errmsg, opts)
@@ -263,13 +266,14 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gpt3", func(c tb.Context) error {
+		model := "gpt-3.5-turbo"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
 				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt3")
 				checkPrintErr(err)
 			} else {
-				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-3.5-turbo"), gpt3.WithTimeout(45*time.Second))
+				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model), gpt3.WithTimeout(45*time.Second))
 				if len(c.Message().ReplyTo.Text) > 2048 {
 					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
 					checkPrintErr(err)
@@ -285,15 +289,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 								Content: c.Message().ReplyTo.Text,
 							},
 						},
-						//					Functions:	  nil,
-						Model: "gpt-3.5-turbo",
-						//						MaxTokens: 512,
-						//Stop:      []string{"."},
-						//					Temperature:      gpt3.Float32Ptr(0.7),
-						//					TopP:             gpt3.Float32Ptr(1),
-						//					N:                gpt3.Float32Ptr(1),
-						//					PresencePenalty:  0,
-						//					FrequencyPenalty: 0,
+						Model: model,
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
@@ -303,10 +299,9 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							checkSendErr(err, b, c, true)
 						}
 					} else {
-						err2 := fmt.Sprintf("Gatnbot: error occurred :(( details:\n\n```go\n%v\n"+
-							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", err.Error())
-						checkSendErr(errors.New(err2), b, c, true)
+						checkSendErr(err, b, c, true,
+							"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+								"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
 					}
 				}
 			}
@@ -316,13 +311,14 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gpt4", func(c tb.Context) error {
+		model := "gpt-4-1106-preview"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
 				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
 				checkPrintErr(err)
 			} else {
-				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-4-1106-preview"))
+				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model))
 				if len(c.Message().ReplyTo.Text) > 1024 {
 					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
 					checkPrintErr(err)
@@ -332,7 +328,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							{
 								Role: "system",
 								Content: "You are GattiniBot, a bot in a group of people called Gattini. Be the most helpful but concise." +
-									//"Output Markdown if needed, but using single * for *bold* and single _ for _italics_.",
 									" Output simple HTML. If formatting is needed, you can make use of the HTML tags a, b, i, s, u, code (for monospace text)." +
 									" Do NOT use ANY other tag or your message will not go through.",
 							},
@@ -341,15 +336,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 								Content: c.Message().ReplyTo.Text,
 							},
 						},
-						//					Functions:	  nil,
-						Model: "gpt-4-1106-preview",
-						//						MaxTokens: 96,
-						//Stop:      []string{"."},
-						//					Temperature:      gpt3.Float32Ptr(0.7),
-						//					TopP:             gpt3.Float32Ptr(1),
-						//					N:                gpt3.Float32Ptr(1),
-						//					PresencePenalty:  0,
-						//					FrequencyPenalty: 0,
+						Model: model,
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
@@ -360,10 +347,10 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							checkSendErr(err, b, c, true)
 						}
 					} else {
-						err2 := fmt.Sprintf("Gatnbot: error occurred :(( details:\n\n```go\n%v\n"+
-							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", err.Error())
-						checkSendErr(errors.New(err2), b, c, true)
+						checkSendErr(err, b, c, true,
+							"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+								"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+
 					}
 				}
 			}
