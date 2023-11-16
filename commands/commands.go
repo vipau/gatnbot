@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/pkg/errors"
 	"github.com/vipau/gatnbot/crontasks"
 	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
 	"github.com/vipau/gatnbot/settings"
@@ -24,6 +25,16 @@ import (
 func checkPrintErr(err error) {
 	if err != nil {
 		slog.Error(err.Error())
+	}
+}
+
+func checkSendErr(err error, b *tb.Bot, c *tb.Chat) {
+	if err != nil {
+		opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+		errmsg := "gatnbot: lol an error occurred\ncheck it out fam\n\n```error\n" + err.Error() + "```"
+		fmt.Println(errmsg)
+		_, err = b.Send(c, errmsg, opts)
+		checkPrintErr(err)
 	}
 }
 
@@ -223,19 +234,11 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			}(resp.Body)
 			if err != nil {
-				opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-				errmsg := "lol an error occurred\ncheck it out bro\n\n```error\n" + err.Error() + "```"
-				fmt.Println(errmsg)
-				_, err = b.Send(c.Message().Chat, errmsg, opts)
-				checkPrintErr(err)
+				checkSendErr(err, b, c.Chat())
 			} else {
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
-					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-					errmsg := "lol an error occurred\ncheck it out bro\n\n```error\n" + err.Error() + "```"
-					fmt.Println(errmsg)
-					_, err = b.Send(c.Message().Chat, errmsg, opts)
-					checkPrintErr(err)
+					checkSendErr(err, b, c.Chat())
 				} else {
 					// here we enter a loop to strip the HTML tags from the response
 					scanner := bufio.NewScanner(strings.NewReader(string(body)))
@@ -289,20 +292,15 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
-							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
-							checkPrintErr(err)
+							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c.Chat())
 						} else {
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-							if err != nil {
-								opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```", opts)
-								checkPrintErr(err2)
-							}
+							checkPrintErr(err)
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 						_, err = b.Reply(c.Message(), "Gatnbot: error occurred :(( details:\n\n```go\n"+err.Error()+
-							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt or try again later. \n"+
+							"```\n\nGatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
 							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.", opts)
 						checkPrintErr(err)
 					}
@@ -321,7 +319,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine("gpt-4-1106-preview"))
-				if len(c.Message().ReplyTo.Text) > 512 {
+				if len(c.Message().ReplyTo.Text) > 1024 {
 					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
 					checkPrintErr(err)
 				} else {
@@ -351,16 +349,11 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					})
 					if err == nil {
 						if resp.Choices[0].Message.Content == "" {
-							_, err = b.Reply(c.Message(), "gatnbot warning: response is empty!")
-							checkPrintErr(err)
+							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c.Chat())
 						} else {
 							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
 							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content, opts)
-							if err != nil {
-								optsMd := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-								_, err2 := b.Reply(c.Message(), "gatnbot error: \n\n```error\n"+err.Error()+"\n```", optsMd)
-								checkPrintErr(err2)
-							}
+							checkSendErr(err, b, c.Chat())
 						}
 					} else {
 						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
@@ -389,9 +382,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			if err != nil {
 				slog.Error(err.Error())
 				slog.Error(gladosLine)
-				opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-				_, err = b.Send(c.Message().Chat, "Error occurred while playing "+gladosLine+" :( details: \n\n```error\n"+err.Error()+"```", opts)
-				checkPrintErr(err)
+				checkSendErr(errors.Wrap(err, "error playing glados line"), b, c.Chat())
 			}
 		}
 		return nil
