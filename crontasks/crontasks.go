@@ -36,7 +36,7 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 
 	// important
 	_, err := s.Every(1).Monday().Tuesday().Wednesday().Thursday().Friday().
-		At("9:00").At("13:00").At("16:30").Do(func() { sendToAllChats(warning, config, b) })
+		At("11:00").At("13:30").At("16:30").Do(func() { sendToAllChats(warning, config, b) })
 	checkPrintErr(err)
 	_, err = s.Every(1).Saturday().Sunday().
 		At("14:30").Do(func() { sendToAllChats(warning, config, b) })
@@ -50,10 +50,6 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 
 	// SABADOOOOOO
 	_, err = s.Every(1).Saturday().At("10:00").Do(func() { sendToAllChats(Sabado, config, b) })
-	checkPrintErr(err)
-
-	// misc shotpost
-	_, err = s.Every(1).Day().At("13:12").Do(func() { sendToAllChats("A.C.A.B.", config, b) })
 	checkPrintErr(err)
 
 	// reload top 500 hacker news articles for the markov chain at midnight
