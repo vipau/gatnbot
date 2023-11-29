@@ -9,7 +9,9 @@ Ver 0.0.1 turbo alpha
     - compiled binary
 - settings.hcl
     - rename settings.hcl.example to settings.hcl and place it in the binary folder.
-    - 
+- glados
+  - a folder full of GlaDoS voice lines (script to download them soon...)
+  
 ## Telegram authentication
 
 - Get a Bot ID and token from @BotFather on Telegram and insert them into settings.hcl "bottoken"
