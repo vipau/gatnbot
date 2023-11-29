@@ -244,13 +244,13 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			// query the BS generator
 			resp, err := http.Get("http://ftrv.se/bullshit")
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				checkPrintErr(err)
-			}(resp.Body)
 			if err != nil {
 				checkSendErr(err, b, c, false)
 			} else {
+				defer func(Body io.ReadCloser) {
+					err := Body.Close()
+					checkPrintErr(err)
+				}(resp.Body)
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
 					checkSendErr(err, b, c, false)
