@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
-	"github.com/pandodao/tokenizer-go"
 	"github.com/pkg/errors"
 	"github.com/vipau/gatnbot/crontasks"
 	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
@@ -352,16 +351,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							output := resp.Choices[0].Message.Content
 							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
 							_, err = b.Reply(c.Message(), output, opts)
-							if err == nil {
-								tin := tokenizer.MustCalToken(c.Message().ReplyTo.Text)
-								tout := tokenizer.MustCalToken(output)
-								pin := float64(tin) * 0.00001
-								pout := float64(tout) * 0.00003
-								opts = &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-								msg := fmt.Sprintf("Input tokens: *%v* ($%.5f)\nOutput tokens: *%v* ($%.5f)\nTotal cost: $%.5f", tin, pin, tout, pout, pin+pout)
-								_, err = b.Send(c.Chat(), msg, opts)
-								checkSendErr(err, b, c, false)
-							} else {
+							if err != nil {
 								checkSendErr(err, b, c, true)
 							}
 						}
