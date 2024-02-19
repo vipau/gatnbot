@@ -280,10 +280,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model), gpt3.WithTimeout(45*time.Second))
-				if len(c.Message().ReplyTo.Text) > 2048 {
-					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
-					checkPrintErr(err)
-				} else {
 					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 						Messages: []gpt3.ChatCompletionRequestMessage{
 							{
@@ -309,7 +305,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
 								"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
 					}
-				}
 			}
 
 		}
