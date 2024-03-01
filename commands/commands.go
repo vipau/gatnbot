@@ -5,10 +5,12 @@ import (
 	"context"
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
+	"github.com/google/generative-ai-go/genai"
 	"github.com/pkg/errors"
 	"github.com/vipau/gatnbot/crontasks"
 	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
 	"github.com/vipau/gatnbot/settings"
+	"google.golang.org/api/option"
 	tb "gopkg.in/telebot.v3"
 	"io"
 	"log"
@@ -280,31 +282,31 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			} else {
 				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model), gpt3.WithTimeout(45*time.Second))
-					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
-						Messages: []gpt3.ChatCompletionRequestMessage{
-							{
-								Role:    "system",
-								Content: "",
-							},
-							{
-								Role:    "user",
-								Content: c.Message().ReplyTo.Text,
-							},
+				resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
+					Messages: []gpt3.ChatCompletionRequestMessage{
+						{
+							Role:    "system",
+							Content: "",
 						},
-						Model: model,
-					})
-					if err == nil {
-						if resp.Choices[0].Message.Content == "" {
-							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
-						} else {
-							_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-							checkSendErr(err, b, c, true)
-						}
+						{
+							Role:    "user",
+							Content: c.Message().ReplyTo.Text,
+						},
+					},
+					Model: model,
+				})
+				if err == nil {
+					if resp.Choices[0].Message.Content == "" {
+						checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 					} else {
-						checkSendErr(err, b, c, true,
-							"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-								"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+						_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
+						checkSendErr(err, b, c, true)
 					}
+				} else {
+					checkSendErr(err, b, c, true,
+						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+				}
 			}
 
 		}
@@ -361,6 +363,42 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		} else {
 			checkSendErr(errors.New("Error: You are not authorized to use GPT4 in this chat :(\n"+
 				"Try /gpt3 here, or ask the admin for access to GPT4"), b, c, true)
+		}
+		return nil
+	})
+
+	b.Handle("/gemini", func(c tb.Context) error {
+		modelname := "gemini-pro"
+		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+			if !c.Message().IsReply() {
+				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gemini")
+				checkPrintErr(err)
+			} else {
+				ctx := context.Background()
+				// Access your API key as an environment variable (see "Set up your API key" above)
+				client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
+				if err != nil {
+					checkSendErr(err, b, c, true)
+				}
+				defer client.Close()
+
+				model := client.GenerativeModel(modelname)
+				resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
+				if err != nil {
+					checkSendErr(err, b, c, true)
+				}
+
+				if err == nil {
+					_, err = b.Reply(c.Message(), resp)
+					checkSendErr(err, b, c, true)
+				} else {
+					checkSendErr(err, b, c, true,
+						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+				}
+			}
+
 		}
 		return nil
 	})
