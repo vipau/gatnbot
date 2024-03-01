@@ -389,9 +389,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				if err == nil {
 					_, err = b.Reply(c.Message(), resp)
 				} else {
-					checkSendErr(err, b, c, true,
-						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+					checkSendErr(err, b, c, true)
 				}
 			}
 
