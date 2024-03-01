@@ -385,9 +385,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 
 				model := client.GenerativeModel(modelname)
 				resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
-				if err != nil {
-					checkSendErr(err, b, c, true)
-				}
 
 				if err == nil {
 					_, err = b.Reply(c.Message(), resp)
