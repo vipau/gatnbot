@@ -6,6 +6,7 @@ usersid = [ "123456789" ]
 gpt4id = [ "1234567890" ]
 ouremail = "youremail@example.org"
 openaiapikey = "sk-12345678901234567890"
+geminiapikey = "012345678890ABCD"
 linksmsg = <<EOF
 Here are some links for you:
 

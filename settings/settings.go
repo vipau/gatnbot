@@ -15,6 +15,7 @@ type Settings struct {
 	Ouremail     string  `hcl:"ouremail"`
 	OpenaiApikey string  `hcl:"openaiapikey"`
 	Linksmsg     string  `hcl:"linksmsg"`
+	GeminiApiKey string  `hcl:"geminiapikey"`
 }
 
 // LoadSettings unmarshals the HCL config file and returns our Settings.

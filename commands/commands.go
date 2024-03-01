@@ -377,7 +377,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 			} else {
 				ctx := context.Background()
 				// Access your API key as an environment variable (see "Set up your API key" above)
-				client, err := genai.NewClient(ctx, option.WithAPIKey(os.Getenv("GEMINI_API_KEY")))
+				client, err := genai.NewClient(ctx, option.WithAPIKey(configmap.GeminiApiKey))
 				if err != nil {
 					checkSendErr(err, b, c, true)
 				}
@@ -391,7 +391,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 
 				if err == nil {
 					_, err = b.Reply(c.Message(), resp)
-					checkSendErr(err, b, c, true)
 				} else {
 					checkSendErr(err, b, c, true,
 						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
