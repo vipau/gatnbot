@@ -376,7 +376,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				checkPrintErr(err)
 			} else {
 				ctx := context.Background()
-				// Access your API key as an environment variable (see "Set up your API key" above)
 				client, err := genai.NewClient(ctx, option.WithAPIKey(configmap.GeminiApiKey))
 				if err != nil {
 					checkSendErr(err, b, c, true)
@@ -387,7 +386,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
 
 				if err == nil {
-					_, err = b.Reply(c.Message(), resp)
+					_, err = b.Reply(c.Message(), buildGeminiResponse(resp))
 				} else {
 					checkSendErr(err, b, c, true)
 				}
@@ -423,4 +422,16 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	return b
+}
+
+func buildGeminiResponse(resp *genai.GenerateContentResponse) string {
+	var output strings.Builder
+	for _, cand := range resp.Candidates {
+		if cand.Content != nil {
+			for _, part := range cand.Content.Parts {
+				output.WriteString(fmt.Sprintf("%v", part))
+			}
+		}
+	}
+	return output.String()
 }
