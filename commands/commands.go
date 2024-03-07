@@ -385,8 +385,10 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				model := client.GenerativeModel(modelname)
 				resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
 
+				opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+
 				if err == nil {
-					_, err = b.Reply(c.Message(), buildGeminiResponse(resp))
+					_, err = b.Reply(c.Message(), buildGeminiResponse(resp), opts)
 				} else {
 					checkSendErr(err, b, c, true)
 				}
