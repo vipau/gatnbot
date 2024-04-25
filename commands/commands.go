@@ -274,7 +274,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gpt3", func(c tb.Context) error {
-		model := "gpt-3.5-turbo-0125"
+		model := "gpt-3.5-turbo"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
