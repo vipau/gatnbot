@@ -314,7 +314,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gpt4", func(c tb.Context) error {
-		model := "gpt-4-turbo"
+		model := "gpt-4o"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
