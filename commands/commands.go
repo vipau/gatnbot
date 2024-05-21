@@ -368,7 +368,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
-		modelname := "gemini-pro"
+		modelname := "gemini-1.5-flash-latest"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
