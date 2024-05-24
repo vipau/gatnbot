@@ -332,7 +332,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 								Role: "system",
 								Content: "You are GattiniBot, a bot in a group of people called Gattini. Be the most helpful but concise." +
 									" Output simple HTML. If formatting is needed, you can make use of the HTML tags a, b, i, s, u, code (for monospace text)." +
-									" Do NOT use ANY other tag or your message will not go through.",
+									" Do NOT use ANY other HTML tag.",
 							},
 							{
 								Role:    "user",
@@ -368,7 +368,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
-		modelname := "gemini-1.5-flash-latest"
+		modelname := "gemini-pro"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			if !c.Message().IsReply() {
