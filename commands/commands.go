@@ -329,10 +329,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 						Messages: []gpt3.ChatCompletionRequestMessage{
 							{
-								Role: "system",
-								Content: "You are GattiniBot, a bot in a group of people called Gattini. Be the most helpful but concise." +
-									" Output simple HTML. If formatting is needed, you can make use of the HTML tags a, b, i, s, u, code (for monospace text)." +
-									" Do NOT use ANY other HTML tag.",
+								Role:    "system",
+								Content: "You are GattiniBot, a bot in a group of people called Gattini.",
 							},
 							{
 								Role:    "user",
@@ -346,8 +344,12 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 						} else {
 							output := resp.Choices[0].Message.Content
-							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "HTML"}
-							_, err = b.Reply(c.Message(), output, opts)
+							fixasio := strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
+							fixasio = strings.ReplaceAll(fixasio, "*", "_")
+							fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
+
+							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+							_, err = b.Reply(c.Message(), fixasio, opts)
 							if err != nil {
 								checkSendErr(err, b, c, true)
 							}
