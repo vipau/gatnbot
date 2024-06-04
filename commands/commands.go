@@ -388,7 +388,11 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
 
 				if err == nil {
-					_, err = b.Reply(c.Message(), buildGeminiResponse(resp))
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+					fixasio := strings.ReplaceAll(buildGeminiResponse(resp), "**", "TEMP_DOUBLE_ASTERISK")
+					fixasio = strings.ReplaceAll(fixasio, "*", "_")
+					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
+					_, err = b.Reply(c.Message(), fixasio, opts)
 				} else {
 					checkSendErr(err, b, c, true)
 				}
