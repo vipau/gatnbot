@@ -393,6 +393,9 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					fixasio = strings.ReplaceAll(fixasio, "*", "_")
 					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
 					_, err = b.Reply(c.Message(), fixasio, opts)
+					if err != nil {
+						checkSendErr(err, b, c, true)
+					}
 				} else {
 					checkSendErr(err, b, c, true)
 				}
