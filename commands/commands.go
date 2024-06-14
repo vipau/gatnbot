@@ -274,59 +274,11 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gpt4", func(c tb.Context) error {
-		model := "gpt-4o"
-		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
-			settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
-			if !c.Message().IsReply() {
-				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
-				checkPrintErr(err)
-			} else {
-				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model))
-				if len(c.Message().ReplyTo.Text) > 1024 {
-					_, err = b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
-					checkPrintErr(err)
-				} else {
-					resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
-						Messages: []gpt3.ChatCompletionRequestMessage{
-							{
-								Role:    "system",
-								Content: "You are GattiniBot, a bot in a group of people called Gattini.",
-							},
-							{
-								Role:    "user",
-								Content: c.Message().ReplyTo.Text,
-							},
-						},
-						Model: model,
-					})
-					if err == nil {
-						if resp.Choices[0].Message.Content == "" {
-							checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
-						} else {
-							output := resp.Choices[0].Message.Content
-							fixasio := strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
-							fixasio = strings.ReplaceAll(fixasio, "*", "_")
-							fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
+		return callGPT4(true, c, configmap, b)
+	})
 
-							opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-							_, err = b.Reply(c.Message(), fixasio, opts)
-							if err != nil {
-								checkSendErr(err, b, c, true)
-							}
-						}
-					} else {
-						checkSendErr(err, b, c, true,
-							"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-								"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
-					}
-				}
-			}
-
-		} else {
-			checkSendErr(errors.New("Error: You are not authorized to use GPT4 in this chat :(\n"+
-				"Try /gpt3 here, or ask the admin for access to GPT4"), b, c, true)
-		}
-		return nil
+	b.Handle("/gpt4code", func(c tb.Context) error {
+		return callGPT4(false, c, configmap, b)
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
@@ -403,4 +355,62 @@ func buildGeminiResponse(resp *genai.GenerateContentResponse) string {
 		}
 	}
 	return output.String()
+}
+
+func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
+	model := "gpt-4o"
+	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+		settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
+		if !c.Message().IsReply() {
+			_, err := b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
+			checkPrintErr(err)
+		} else {
+			client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model))
+			if len(c.Message().ReplyTo.Text) > 1024 {
+				_, err := b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
+				checkPrintErr(err)
+			} else {
+				resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
+					Messages: []gpt3.ChatCompletionRequestMessage{
+						{
+							Role:    "system",
+							Content: "You are GattiniBot, a bot in a group of people called Gattini.",
+						},
+						{
+							Role:    "user",
+							Content: c.Message().ReplyTo.Text,
+						},
+					},
+					Model: model,
+				})
+				if err == nil {
+					if resp.Choices[0].Message.Content == "" {
+						checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
+					} else {
+						output := resp.Choices[0].Message.Content
+						if format {
+							// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
+							output = strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
+							output = strings.ReplaceAll(output, "*", "_")
+							output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
+						}
+						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+						_, err = b.Reply(c.Message(), output, opts)
+						if err != nil {
+							checkSendErr(err, b, c, true)
+						}
+					}
+				} else {
+					checkSendErr(err, b, c, true,
+						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+				}
+			}
+		}
+
+	} else {
+		checkSendErr(errors.New("Error: You are not authorized to use GPT4 in this chat :(\n"+
+			"Try /gpt3 here, or ask the admin for access to GPT4"), b, c, true)
+	}
+	return nil
 }
