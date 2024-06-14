@@ -273,46 +273,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		return nil
 	})
 
-	b.Handle("/gpt3", func(c tb.Context) error {
-		model := "gpt-3.5-turbo"
-		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
-			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
-			if !c.Message().IsReply() {
-				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gpt3")
-				checkPrintErr(err)
-			} else {
-				client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model), gpt3.WithTimeout(45*time.Second))
-				resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
-					Messages: []gpt3.ChatCompletionRequestMessage{
-						{
-							Role:    "system",
-							Content: "",
-						},
-						{
-							Role:    "user",
-							Content: c.Message().ReplyTo.Text,
-						},
-					},
-					Model: model,
-				})
-				if err == nil {
-					if resp.Choices[0].Message.Content == "" {
-						checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
-					} else {
-						_, err = b.Reply(c.Message(), resp.Choices[0].Message.Content)
-						checkSendErr(err, b, c, true)
-					}
-				} else {
-					checkSendErr(err, b, c, true,
-						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
-				}
-			}
-
-		}
-		return nil
-	})
-
 	b.Handle("/gpt4", func(c tb.Context) error {
 		model := "gpt-4o"
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
