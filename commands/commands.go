@@ -342,6 +342,19 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		return err
 	})
 
+	b.Handle("/coin", func(c tb.Context) error {
+		rand.Seed(time.Now().UnixNano())
+		outcome := rand.Intn(2)
+		output := ""
+		if outcome == 0 {
+			output = "Heads"
+		} else {
+			output = "Tails"
+		}
+		b.Send(c.Message().Chat, output)
+		return nil
+	})
+
 	return b
 }
 
