@@ -282,39 +282,11 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
-		modelname := "gemini-pro"
-		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
-			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
-			if !c.Message().IsReply() {
-				_, err = b.Reply(c.Message(), "Need to reply to a message to use /gemini")
-				checkPrintErr(err)
-			} else {
-				ctx := context.Background()
-				client, err := genai.NewClient(ctx, option.WithAPIKey(configmap.GeminiApiKey))
-				if err != nil {
-					checkSendErr(err, b, c, true)
-				}
-				defer client.Close()
+		return callGemini(true, c, configmap, b)
+	})
 
-				model := client.GenerativeModel(modelname)
-				resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
-
-				if err == nil {
-					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-					fixasio := strings.ReplaceAll(buildGeminiResponse(resp), "**", "TEMP_DOUBLE_ASTERISK")
-					fixasio = strings.ReplaceAll(fixasio, "*", "_")
-					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
-					_, err = b.Reply(c.Message(), fixasio, opts)
-					if err != nil {
-						checkSendErr(err, b, c, true)
-					}
-				} else {
-					checkSendErr(err, b, c, true)
-				}
-			}
-
-		}
-		return nil
+	b.Handle("/geminicode", func(c tb.Context) error {
+		return callGemini(false, c, configmap, b)
 	})
 
 	b.Handle("/glados", func(c tb.Context) error {
@@ -424,6 +396,47 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 	} else {
 		checkSendErr(errors.New("Error: You are not authorized to use GPT4 in this chat :(\n"+
 			"Try /gpt3 here, or ask the admin for access to GPT4"), b, c, true)
+	}
+	return nil
+}
+
+func callGemini(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
+	modelname := "gemini-pro"
+	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+		settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+		if !c.Message().IsReply() {
+			_, err := b.Reply(c.Message(), "Need to reply to a message to use /gemini")
+			checkPrintErr(err)
+		} else {
+			ctx := context.Background()
+			client, err := genai.NewClient(ctx, option.WithAPIKey(configmap.GeminiApiKey))
+			if err != nil {
+				checkSendErr(err, b, c, true)
+			}
+			defer client.Close()
+
+			model := client.GenerativeModel(modelname)
+			resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
+
+			if err == nil {
+				if format {
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+					fixasio := strings.ReplaceAll(buildGeminiResponse(resp), "**", "TEMP_DOUBLE_ASTERISK")
+					fixasio = strings.ReplaceAll(fixasio, "*", "-")
+					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
+					_, err = b.Reply(c.Message(), fixasio, opts)
+				} else {
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: ""}
+					_, err = b.Reply(c.Message(), buildGeminiResponse(resp), opts)
+				}
+				if err != nil {
+					checkSendErr(err, b, c, true)
+				}
+			} else {
+				checkSendErr(err, b, c, true)
+			}
+		}
+
 	}
 	return nil
 }
