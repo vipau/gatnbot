@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"github.com/3JoB/anthropic-sdk-go/v2"
+	"github.com/3JoB/anthropic-sdk-go/v2/data"
+	"github.com/3JoB/anthropic-sdk-go/v2/resp"
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/google/generative-ai-go/genai"
 	"github.com/pkg/errors"
@@ -251,6 +254,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				defer func(Body io.ReadCloser) {
 					err := Body.Close()
 					checkPrintErr(err)
+					checkSendErr(err, b, c, false)
 				}(resp.Body)
 				body, err := io.ReadAll(resp.Body)
 				if err != nil {
@@ -264,6 +268,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 						if !strings.HasPrefix(line, "<") {
 							_, err = b.Send(c.Message().Chat, line)
 							checkPrintErr(err)
+							checkSendErr(err, b, c, true)
 						}
 					}
 				}
@@ -282,11 +287,23 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
-		return callGemini(true, c, configmap, b)
+		return callGemini("gemini-1.0-pro", true, c, configmap, b)
 	})
 
 	b.Handle("/geminicode", func(c tb.Context) error {
-		return callGemini(false, c, configmap, b)
+		return callGemini("gemini-1.0-pro", false, c, configmap, b)
+	})
+
+	b.Handle("/gemini15", func(c tb.Context) error {
+		return callGemini("gemini-1.5-pro", true, c, configmap, b)
+	})
+
+	b.Handle("/claude", func(c tb.Context) error {
+		return callClaude("claude-3-5-sonnet-20240620", true, c, configmap, b)
+	})
+
+	b.Handle("/claudecode", func(c tb.Context) error {
+		return callClaude("claude-3-5-sonnet-20240620", false, c, configmap, b)
 	})
 
 	b.Handle("/glados", func(c tb.Context) error {
@@ -355,7 +372,7 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 				_, err := b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
 				checkPrintErr(err)
 			} else {
-				resp, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
+				respo, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 					Messages: []gpt3.ChatCompletionRequestMessage{
 						{
 							Role:    "system",
@@ -369,10 +386,10 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 					Model: model,
 				})
 				if err == nil {
-					if resp.Choices[0].Message.Content == "" {
+					if respo.Choices[0].Message.Content == "" {
 						checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 					} else {
-						output := resp.Choices[0].Message.Content
+						output := respo.Choices[0].Message.Content
 						if format {
 							// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
 							output = strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
@@ -400,8 +417,7 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 	return nil
 }
 
-func callGemini(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
-	modelname := "gemini-pro"
+func callGemini(modelname string, format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 		settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
@@ -416,18 +432,59 @@ func callGemini(format bool, c tb.Context, configmap settings.Settings, b *tb.Bo
 			defer client.Close()
 
 			model := client.GenerativeModel(modelname)
-			resp, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
+			respo, err := model.GenerateContent(ctx, genai.Text(c.Message().ReplyTo.Text))
 
 			if err == nil {
 				if format {
 					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-					fixasio := strings.ReplaceAll(buildGeminiResponse(resp), "**", "TEMP_DOUBLE_ASTERISK")
+					fixasio := strings.ReplaceAll(buildGeminiResponse(respo), "**", "TEMP_DOUBLE_ASTERISK")
 					fixasio = strings.ReplaceAll(fixasio, "*", "-")
 					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
 					_, err = b.Reply(c.Message(), fixasio, opts)
 				} else {
 					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: ""}
-					_, err = b.Reply(c.Message(), buildGeminiResponse(resp), opts)
+					_, err = b.Reply(c.Message(), buildGeminiResponse(respo), opts)
+				}
+				if err != nil {
+					checkSendErr(err, b, c, true)
+				}
+			} else {
+				checkSendErr(err, b, c, true)
+			}
+		}
+
+	}
+	return nil
+}
+func callClaude(modelname string, format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
+	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
+		settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
+		if !c.Message().IsReply() {
+			_, err := b.Reply(c.Message(), "Need to reply to a message to use /claude")
+			checkPrintErr(err)
+		} else {
+			client, err := anthropic.New(&anthropic.Config{Key: configmap.ClaudeApiKey, DefaultModel: modelname})
+			if err != nil {
+				checkSendErr(err, b, c, true)
+			}
+
+			respo, err := client.Send(&anthropic.Sender{
+				Message: data.MessageModule{
+					Human: c.Message().ReplyTo.Text,
+				},
+				Sender: &resp.Sender{MaxToken: 1200},
+			})
+
+			if err == nil {
+				if format {
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+					fixasio := strings.ReplaceAll(respo.Response.String(), "**", "TEMP_DOUBLE_ASTERISK")
+					fixasio = strings.ReplaceAll(fixasio, "*", "-")
+					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
+					_, err = b.Reply(c.Message(), fixasio, opts)
+				} else {
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: ""}
+					_, err = b.Reply(c.Message(), respo.Response.String(), opts)
 				}
 				if err != nil {
 					checkSendErr(err, b, c, true)
