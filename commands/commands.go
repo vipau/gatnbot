@@ -4,11 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/3JoB/anthropic-sdk-go/v2"
-	"github.com/3JoB/anthropic-sdk-go/v2/data"
-	"github.com/3JoB/anthropic-sdk-go/v2/resp"
 	"github.com/PullRequestInc/go-gpt3"
 	"github.com/google/generative-ai-go/genai"
+	"github.com/liushuangls/go-anthropic/v2"
 	"github.com/pkg/errors"
 	"github.com/vipau/gatnbot/crontasks"
 	fakernewsmod "github.com/vipau/gatnbot/fakernews-mod"
@@ -298,6 +296,10 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		return callGemini("gemini-1.5-pro", true, c, configmap, b)
 	})
 
+	b.Handle("/gemini15code", func(c tb.Context) error {
+		return callGemini("gemini-1.5-pro", true, c, configmap, b)
+	})
+
 	b.Handle("/claude", func(c tb.Context) error {
 		return callClaude("claude-3-5-sonnet-20240620", true, c, configmap, b)
 	})
@@ -463,28 +465,27 @@ func callClaude(modelname string, format bool, c tb.Context, configmap settings.
 			_, err := b.Reply(c.Message(), "Need to reply to a message to use /claude")
 			checkPrintErr(err)
 		} else {
-			client, err := anthropic.New(&anthropic.Config{Key: configmap.ClaudeApiKey, DefaultModel: modelname})
-			if err != nil {
-				checkSendErr(err, b, c, true)
-			}
+			client := anthropic.NewClient(configmap.ClaudeApiKey)
 
-			respo, err := client.Send(&anthropic.Sender{
-				Message: data.MessageModule{
-					Human: c.Message().ReplyTo.Text,
+			respo, err := client.CreateMessages(context.Background(), anthropic.MessagesRequest{
+				Model: modelname,
+				Messages: []anthropic.Message{
+					anthropic.NewUserTextMessage(c.Message().ReplyTo.Text),
 				},
-				Sender: &resp.Sender{MaxToken: 1200},
+				MaxTokens: 1200,
 			})
 
 			if err == nil {
 				if format {
 					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-					fixasio := strings.ReplaceAll(respo.Response.String(), "**", "TEMP_DOUBLE_ASTERISK")
-					fixasio = strings.ReplaceAll(fixasio, "*", "-")
-					fixasio = strings.ReplaceAll(fixasio, "TEMP_DOUBLE_ASTERISK", "*")
-					_, err = b.Reply(c.Message(), fixasio, opts)
+					// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
+					output := strings.ReplaceAll(*respo.Content[0].Text, "**", "TEMP_DOUBLE_ASTERISK")
+					output = strings.ReplaceAll(output, "*", "_")
+					output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
+					_, err = b.Reply(c.Message(), output, opts)
 				} else {
 					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: ""}
-					_, err = b.Reply(c.Message(), respo.Response.String(), opts)
+					_, err = b.Reply(c.Message(), *respo.Content[0].Text, opts)
 				}
 				if err != nil {
 					checkSendErr(err, b, c, true)
