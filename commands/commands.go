@@ -484,7 +484,7 @@ func callClaude(modelname string, format bool, c tb.Context, configmap settings.
 					output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
 					_, err = b.Reply(c.Message(), output, opts)
 				} else {
-					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: ""}
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
 					_, err = b.Reply(c.Message(), *respo.Content[0].Text, opts)
 				}
 				if err != nil {
