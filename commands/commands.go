@@ -95,11 +95,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		// All the text messages that weren't
 		// captured by existing handlers.
 
-		// Print user ID and username on terminal, if message doesn't come from group
-		if !settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) {
-			fmt.Println("User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
-		}
-
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 
@@ -167,12 +162,24 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 
 				// try for youtube
 				if u.Hostname() == "youtube.com" || u.Hostname() == "www.youtube.com" || u.Hostname() == "youtu.be" {
+					var send = false
+					var sendstring = ""
 					q := u.Query()
 					if q.Has("si") {
-						b.Delete(c.Message())
 						q.Del("si")
+						sendstring += "\nRemoved 'si' tracking tag\n"
+						send = true
+					}
+					if returnFragments(u.Path)[0] == "shorts" {
+						q.Add("v", returnFragments(u.Path)[1])
+						u.Path = "/watch"
+						send = true
+						sendstring += "\nFixed short preview\n"
+					}
+					if send {
+						b.Delete(c.Message())
 						u.RawQuery = q.Encode()
-						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+" who did not remove the 'si' tracking tag... wtf\n\n"+u.String(), opts)
+						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+sendstring+u.String(), opts)
 						checkSendErr(err, b, c, false)
 					}
 				}
