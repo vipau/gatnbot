@@ -96,9 +96,8 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		// captured by existing handlers.
 
 		// Print user ID and username on terminal, if message doesn't come from group
-		var user = c.Sender()
 		if !settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) {
-			fmt.Println("User ID: " + strconv.FormatInt(user.ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
+			fmt.Println("User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 		}
 
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
