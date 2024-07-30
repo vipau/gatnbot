@@ -363,6 +363,7 @@ func buildGeminiResponse(resp *genai.GenerateContentResponse) string {
 
 func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
 	model := "gpt-4o"
+	fmt.Println("GPT4 -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 		settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
@@ -370,45 +371,40 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 			checkPrintErr(err)
 		} else {
 			client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model))
-			if len(c.Message().ReplyTo.Text) > 1024 {
-				_, err := b.Reply(c.Message(), "Gatnbot warning: Prompt too long, sorry bro")
-				checkPrintErr(err)
-			} else {
-				respo, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
-					Messages: []gpt3.ChatCompletionRequestMessage{
-						{
-							Role:    "system",
-							Content: "You are GattiniBot, a bot in a group of people called Gattini.",
-						},
-						{
-							Role:    "user",
-							Content: c.Message().ReplyTo.Text,
-						},
+			respo, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
+				Messages: []gpt3.ChatCompletionRequestMessage{
+					{
+						Role:    "system",
+						Content: "You are GattiniBot, a bot in a group of people called Gattini.",
 					},
-					Model: model,
-				})
-				if err == nil {
-					if respo.Choices[0].Message.Content == "" {
-						checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
-					} else {
-						output := respo.Choices[0].Message.Content
-						if format {
-							// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
-							output = strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
-							output = strings.ReplaceAll(output, "*", "_")
-							output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
-						}
-						opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-						_, err = b.Reply(c.Message(), output, opts)
-						if err != nil {
-							checkSendErr(err, b, c, true)
-						}
-					}
+					{
+						Role:    "user",
+						Content: c.Message().ReplyTo.Text,
+					},
+				},
+				Model: model,
+			})
+			if err == nil {
+				if respo.Choices[0].Message.Content == "" {
+					checkSendErr(errors.New("gatnbot warning: response is empty!"), b, c, true)
 				} else {
-					checkSendErr(err, b, c, true,
-						"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
-							"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
+					output := respo.Choices[0].Message.Content
+					if format {
+						// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
+						output = strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
+						output = strings.ReplaceAll(output, "*", "_")
+						output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
+					}
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+					_, err = b.Reply(c.Message(), output, opts)
+					if err != nil {
+						checkSendErr(err, b, c, true)
+					}
 				}
+			} else {
+				checkSendErr(err, b, c, true,
+					"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+						"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
 			}
 		}
 
@@ -420,6 +416,7 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 }
 
 func callGemini(modelname string, format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
+	fmt.Println("GMN -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 		settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
@@ -459,6 +456,7 @@ func callGemini(modelname string, format bool, c tb.Context, configmap settings.
 	return nil
 }
 func callClaude(modelname string, format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
+	fmt.Println("CLD-- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 		settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
@@ -484,7 +482,7 @@ func callClaude(modelname string, format bool, c tb.Context, configmap settings.
 					output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
 					_, err = b.Reply(c.Message(), output, opts)
 				} else {
-					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
+					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: ""}
 					_, err = b.Reply(c.Message(), *respo.Content[0].Text, opts)
 				}
 				if err != nil {
