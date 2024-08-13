@@ -130,7 +130,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					// if URL is not profile (more than 1 path fragment)
 					if len(returnFragments(u.Path)) > 1 {
 						u.Host = "fxtwitter.com"
-						b.Delete(c.Message())
 						q := u.Query()
 						if q.Has("s") {
 							q.Del("s")
@@ -140,22 +139,28 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							q.Del("t")
 							u.RawQuery = q.Encode()
 						}
+						b.Delete(c.Message())
 						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+" who did not use fxtwitter... wtf\n\n"+u.String(), opts)
 						checkSendErr(err, b, c, false)
 					} else {
 						// if it's a profile, just remove 's' and 't' trackers
-						b.Delete(c.Message())
+						send := false
 						q := u.Query()
 						if q.Has("s") {
 							q.Del("s")
 							u.RawQuery = q.Encode()
+							send = true
 						}
 						if q.Has("t") {
 							q.Del("t")
 							u.RawQuery = q.Encode()
+							send = true
 						}
-						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+" who did not remove s/t trackers from the link... wtf\n\n"+u.String(), opts)
-						checkSendErr(err, b, c, false)
+						if send {
+							b.Delete(c.Message())
+							b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+" who did not remove s/t trackers from the link... wtf\n\n"+u.String(), opts)
+							checkSendErr(err, b, c, false)
+						}
 
 					}
 				}
@@ -167,19 +172,19 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 					q := u.Query()
 					if q.Has("si") {
 						q.Del("si")
-						sendstring += "\nRemoved 'si' tracking tag\n"
+						sendstring += "Removed 'si' tracking tag\n"
 						send = true
 					}
 					if returnFragments(u.Path)[0] == "shorts" {
 						q.Add("v", returnFragments(u.Path)[1])
 						u.Path = "/watch"
 						send = true
-						sendstring += "\nFixed short preview\n"
+						sendstring += "Fixed short preview\n"
 					}
 					if send {
 						b.Delete(c.Message())
 						u.RawQuery = q.Encode()
-						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+sendstring+u.String(), opts)
+						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+"\n"+sendstring+u.String(), opts)
 						checkSendErr(err, b, c, false)
 					}
 				}
