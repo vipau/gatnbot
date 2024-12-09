@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"github.com/PullRequestInc/go-gpt3"
@@ -13,11 +12,9 @@ import (
 	"github.com/vipau/gatnbot/settings"
 	"google.golang.org/api/option"
 	tb "gopkg.in/telebot.v3"
-	"io"
 	"log"
 	"log/slog"
 	"math/rand"
-	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -248,41 +245,6 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				log.Fatal(err)
 			}
 			return nil
-		}
-		return nil
-	})
-
-	b.Handle("/supercazzola", func(c tb.Context) error {
-		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
-			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
-			// query the BS generator
-			resp, err := http.Get("http://ftrv.se/bullshit")
-			if err != nil {
-				checkSendErr(err, b, c, false)
-			} else {
-				defer func(Body io.ReadCloser) {
-					err := Body.Close()
-					checkPrintErr(err)
-					checkSendErr(err, b, c, false)
-				}(resp.Body)
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					checkSendErr(err, b, c, false)
-				} else {
-					// here we enter a loop to strip the HTML tags from the response
-					scanner := bufio.NewScanner(strings.NewReader(string(body)))
-					for scanner.Scan() {
-						line := scanner.Text()
-						// simply check that the line does not start with <
-						if !strings.HasPrefix(line, "<") {
-							_, err = b.Send(c.Message().Chat, line)
-							checkPrintErr(err)
-							checkSendErr(err, b, c, true)
-						}
-					}
-				}
-
-			}
 		}
 		return nil
 	})
