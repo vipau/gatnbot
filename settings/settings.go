@@ -6,17 +6,17 @@ import (
 )
 
 type Settings struct {
-	Timezone     string  `hcl:"timezone"`
-	Apiurl       string  `hcl:"apiurl"`
-	Bottoken     string  `hcl:"bottoken"`
-	Chatid       []int64 `hcl:"chatid"`
-	Usersid      []int64 `hcl:"usersid"`
-	Gpt4id       []int64 `hcl:"gpt4id"`
-	Ouremail     string  `hcl:"ouremail"`
-	OpenaiApikey string  `hcl:"openaiapikey"`
-	Linksmsg     string  `hcl:"linksmsg"`
-	GeminiApiKey string  `hcl:"geminiapikey"`
-	ClaudeApiKey string  `hcl:"claudeapikey"`
+	Timezone       string  `hcl:"timezone"`
+	Apiurl         string  `hcl:"apiurl"`
+	Bottoken       string  `hcl:"bottoken"`
+	Chatid         []int64 `hcl:"chatid"`
+	Usersid        []int64 `hcl:"usersid"`
+	Deepseekid     []int64 `hcl:"deepseekid"`
+	Ouremail       string  `hcl:"ouremail"`
+	DeepseekApiKey string  `hcl:"deepseekapikey"`
+	Linksmsg       string  `hcl:"linksmsg"`
+	GeminiApiKey   string  `hcl:"geminiapikey"`
+	ClaudeApiKey   string  `hcl:"claudeapikey"`
 }
 
 // LoadSettings unmarshals the HCL config file and returns our Settings.

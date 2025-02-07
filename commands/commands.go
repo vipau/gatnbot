@@ -126,7 +126,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 				if u.Hostname() == "twitter.com" || u.Hostname() == "www.twitter.com" || u.Hostname() == "x.com" || u.Hostname() == "www.x.com" {
 					// if URL is not profile (more than 1 path fragment)
 					if len(returnFragments(u.Path)) > 1 {
-						u.Host = "fxtwitter.com"
+						u.Host = "fixupx.com"
 						q := u.Query()
 						if q.Has("s") {
 							q.Del("s")
@@ -137,7 +137,7 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 							u.RawQuery = q.Encode()
 						}
 						b.Delete(c.Message())
-						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+" who did not use fxtwitter... wtf\n\n"+u.String(), opts)
+						b.Send(c.Chat(), "From: "+findPrintableName(c.Sender())+" who did not use fixupx... wtf\n\n"+u.String(), opts)
 						checkSendErr(err, b, c, false)
 					} else {
 						// if it's a profile, just remove 's' and 't' trackers
@@ -249,12 +249,16 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		return nil
 	})
 
-	b.Handle("/gpt4", func(c tb.Context) error {
-		return callGPT4(true, c, configmap, b)
+	b.Handle("/deepseek", func(c tb.Context) error {
+		return callDeepseek(true, c, configmap, b, "deepseek-chat", 60*time.Second)
 	})
 
-	b.Handle("/gpt4code", func(c tb.Context) error {
-		return callGPT4(false, c, configmap, b)
+	b.Handle("/deepseekr1", func(c tb.Context) error {
+		return callDeepseek(true, c, configmap, b, "deepseek-reasoner", 150*time.Second)
+	})
+
+	b.Handle("/deepseekr1code", func(c tb.Context) error {
+		return callDeepseek(false, c, configmap, b, "deepseek-reasoner", 150*time.Second)
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
@@ -334,16 +338,15 @@ func buildGeminiResponse(resp *genai.GenerateContentResponse) string {
 	return output.String()
 }
 
-func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot) error {
-	model := "gpt-4o"
-	fmt.Println("GPT4 -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
+func callDeepseek(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot, model string, timeout time.Duration) error {
+	fmt.Println("DeepSeek -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
-		settings.ListContainsID(configmap.Gpt4id, c.Message().Chat.ID) {
+		settings.ListContainsID(configmap.Deepseekid, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
-			_, err := b.Reply(c.Message(), "Need to reply to a message to use /gpt4")
+			_, err := b.Reply(c.Message(), "Need to reply to a message to use /deepseek")
 			checkPrintErr(err)
 		} else {
-			client := gpt3.NewClient(configmap.OpenaiApikey, gpt3.WithDefaultEngine(model))
+			client := gpt3.NewClient(configmap.DeepseekApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.deepseek.com"), gpt3.WithTimeout(timeout))
 			respo, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 				Messages: []gpt3.ChatCompletionRequestMessage{
 					{
@@ -363,7 +366,7 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 				} else {
 					output := respo.Choices[0].Message.Content
 					if format {
-						// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
+						// replace DeepSeek Markdown with Telegram markdown (breaks code blocks)
 						output = strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
 						output = strings.ReplaceAll(output, "*", "_")
 						output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
@@ -376,14 +379,14 @@ func callGPT4(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot)
 				}
 			} else {
 				checkSendErr(err, b, c, true,
-					"Gatnbot note: If the above says *\"context deadline exceeded\"*, GPT took too long to generate an answer. Please try a simpler prompt, try again later, or if this is important try /gpt4 \n"+
+					"Gatnbot note: If the above says *\"context deadline exceeded\"*, DeepSeek took too long to generate an answer. \n"+
 						"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
 			}
 		}
 
 	} else {
-		checkSendErr(errors.New("Error: You are not authorized to use GPT4 in this chat :(\n"+
-			"Try /gpt3 here, or ask the admin for access to GPT4"), b, c, true)
+		checkSendErr(errors.New("Error: You are not authorized to use DeepSeek in this chat :(\n"+
+			"Try /deepseek here, or ask the admin for access to DeepSeek"), b, c, true)
 	}
 	return nil
 }
@@ -449,7 +452,7 @@ func callClaude(modelname string, format bool, c tb.Context, configmap settings.
 			if err == nil {
 				if format {
 					opts := &tb.SendOptions{DisableWebPagePreview: true, ParseMode: "Markdown"}
-					// replace GPT4 Markdown with Telegram markdown (breaks code blocks)
+					// replace Claude Markdown with Telegram markdown (breaks code blocks)
 					output := strings.ReplaceAll(*respo.Content[0].Text, "**", "TEMP_DOUBLE_ASTERISK")
 					output = strings.ReplaceAll(output, "*", "_")
 					output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
