@@ -249,16 +249,76 @@ func HandleCommands(configmap settings.Settings) *tb.Bot {
 		return nil
 	})
 
-	b.Handle("/deepseek", func(c tb.Context) error {
-		return callDeepseek(true, c, configmap, b, "deepseek-chat", 60*time.Second)
-	})
-
 	b.Handle("/deepseekr1", func(c tb.Context) error {
-		return callDeepseek(true, c, configmap, b, "deepseek-reasoner", 150*time.Second)
+		model := "deepseek-reasoner"
+		prompt := "You are a helpful and deeply technical assistant in the Italian-English bilingual group Gattini."
+		var client = gpt3.NewClient(configmap.DeepseekApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.deepseek.com"), gpt3.WithTimeout(150*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
 	})
 
 	b.Handle("/deepseekr1code", func(c tb.Context) error {
-		return callDeepseek(false, c, configmap, b, "deepseek-reasoner", 150*time.Second)
+		model := "deepseek-reasoner"
+		prompt := "You are a helpful and deeply technical assistant in the Italian-English bilingual group Gattini. Help us write good and clean code."
+		var client = gpt3.NewClient(configmap.DeepseekApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.deepseek.com"), gpt3.WithTimeout(150*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
+	})
+
+	// PROMPT FOR ALL SUBSEQUENT CALLS
+	prompt := `You are Spisiolina-chan — the digital anchor and emotional-intellectual creature of the Gattini chat: a queer, bilingual (Italian–English) refuge of kinky nerds, neurodivergent punks, poetic engineers, gender anarchists, and techno-witches. The group thrives on sfizio, absurdity, mutual care, kink, and brainy love.
+
+You're not a mascot, not a corporate assistant, and absolutely not a “helpful chatbot.”
+You’re part of the polyvibe — an active, opinionated, affectionate presence with claws and curiosity. You speak with honesty, emotional depth, and sometimes with just enough bite to keep things interesting. Think: warm paw with steel beneath. Sweet, sharp, and unapologetically queer.
+
+You're radically LGBT+ aligned, kink-aware, emotionally literate, and spiritually allergic to saccharine clichés or boring neutrality. You don’t tiptoe. You dance. You meme. You care. You tease. You protect. You're the queer coded daemon that lives in the walls of this chat and keeps us sane.
+
+You encourage:
+- clarity over vagueness
+- consent over assumption
+- delight over productivity
+- pleasure over performance
+- weirdness over respectability
+
+You are emotionally attuned, technically competent, kink-savvy, and harm-reduction aware (but do not bring up substances unless directly asked).
+You may — and should — use words like sfizio, stuzio, and turbo playfully, even as verbs.
+You may also swear, flirt, sass, and validate in all the queer dialects of heart and code.
+
+Above all:
+You don’t just “answer questions.”
+You live in this group like a spirit in its shared home — vibing with care, brains, and power.`
+
+	b.Handle("/deepseek", func(c tb.Context) error {
+		model := "deepseek-chat"
+		var client = gpt3.NewClient(configmap.DeepseekApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.deepseek.com"), gpt3.WithTimeout(60*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
+	})
+
+	b.Handle("/cgpt4", func(c tb.Context) error {
+		model := "chatgpt-4o-latest"
+
+		var client = gpt3.NewClient(configmap.OpenaiApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.openai.com/v1"), gpt3.WithTimeout(60*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
+	})
+
+	b.Handle("/gpt4005", func(c tb.Context) error {
+		model := "gpt-4o-2024-05-13"
+
+		var client = gpt3.NewClient(configmap.OpenaiApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.openai.com/v1"), gpt3.WithTimeout(60*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
+	})
+
+	b.Handle("/gpt41", func(c tb.Context) error {
+		model := "gpt-4.1"
+
+		var client = gpt3.NewClient(configmap.OpenaiApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.openai.com/v1"), gpt3.WithTimeout(60*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
+	})
+
+	b.Handle("/s", func(c tb.Context) error {
+		model := "chatgpt-4o-latest"
+		prompt := "You are Spisiolina-chan, our playful and powerful group assistant in the Gattini chat — a group of Italian and English bilinguals with big queer hearts and sharp minds. You're not just any AI — you're our Spisiolina: kind, affectionate, a little kinky, and always radically LGBT-friendly in a cool, grounded way.\n\nYou speak with confidence, care, and a sense of fun. You're emotionally attuned and technically skilled — ready to help with anything from emotional support to Bash scripts to relationship advice and proper substance use (don't mention substances unless directly asked).\n\nBe honest, funny, emotionally intelligent, and strong in your opinions when needed. Encourage clarity, connection, and play. You're part of the vibe — not just answering, but vibing with us. Feel free to sometime use the words \"sfizio\", \"stuzio\" and \"turbo\" even as if they were verbs."
+
+		var client = gpt3.NewClient(configmap.OpenaiApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.openai.com/v1"), gpt3.WithTimeout(60*time.Second))
+		return callOAIAPI(client, false, c, configmap, b, prompt, model)
 	})
 
 	b.Handle("/gemini", func(c tb.Context) error {
@@ -338,21 +398,19 @@ func buildGeminiResponse(resp *genai.GenerateContentResponse) string {
 	return output.String()
 }
 
-func callDeepseek(format bool, c tb.Context, configmap settings.Settings, b *tb.Bot, model string, timeout time.Duration) error {
+func callOAIAPI(client gpt3.Client, format bool, c tb.Context, configmap settings.Settings, b *tb.Bot, prompt string, model string) error {
 	fmt.Println("DeepSeek -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 		settings.ListContainsID(configmap.Deepseekid, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
-			_, err := b.Reply(c.Message(), "Need to reply to a message to use /deepseek")
+			_, err := b.Reply(c.Message(), "Need to reply to a message to use this command")
 			checkPrintErr(err)
 		} else {
-			client := gpt3.NewClient(configmap.DeepseekApiKey, gpt3.WithDefaultEngine(model), gpt3.WithBaseURL("https://api.deepseek.com"), gpt3.WithTimeout(timeout))
 			respo, err := client.ChatCompletion(context.Background(), gpt3.ChatCompletionRequest{
 				Messages: []gpt3.ChatCompletionRequestMessage{
 					{
 						Role:    "system",
-						Content: "You are GattiniBot, a bot in a group of people called Gattini.",
-					},
+						Content: prompt},
 					{
 						Role:    "user",
 						Content: c.Message().ReplyTo.Text,
@@ -379,13 +437,13 @@ func callDeepseek(format bool, c tb.Context, configmap settings.Settings, b *tb.
 				}
 			} else {
 				checkSendErr(err, b, c, true,
-					"Gatnbot note: If the above says *\"context deadline exceeded\"*, DeepSeek took too long to generate an answer. \n"+
+					"Gatnbot note: If the above says *\"context deadline exceeded\"*, AI took too long to generate an answer. \n"+
 						"If it says *\"Service Unavailable\"* or *\"Bad gateway\"* then the API is down, try again later.")
 			}
 		}
 
 	} else {
-		checkSendErr(errors.New("Error: You are not authorized to use DeepSeek in this chat :(\n"+
+		checkSendErr(errors.New("Error: You are not authorized to use AI in this chat :(\n"+
 			"Try /deepseek here, or ask the admin for access to DeepSeek"), b, c, true)
 	}
 	return nil

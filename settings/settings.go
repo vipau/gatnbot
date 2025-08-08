@@ -13,6 +13,7 @@ type Settings struct {
 	Usersid        []int64 `hcl:"usersid"`
 	Deepseekid     []int64 `hcl:"deepseekid"`
 	Ouremail       string  `hcl:"ouremail"`
+	OpenaiApiKey   string  `hcl:"openaiapikey"`
 	DeepseekApiKey string  `hcl:"deepseekapikey"`
 	Linksmsg       string  `hcl:"linksmsg"`
 	GeminiApiKey   string  `hcl:"geminiapikey"`
