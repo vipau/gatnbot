@@ -11,7 +11,7 @@ type Settings struct {
 	Bottoken       string  `hcl:"bottoken"`
 	Chatid         []int64 `hcl:"chatid"`
 	Usersid        []int64 `hcl:"usersid"`
-	Deepseekid     []int64 `hcl:"deepseekid"`
+	OpenAICompatibleId     []int64 `hcl:"openaicompatibleid"`
 	Ouremail       string  `hcl:"ouremail"`
 	OpenaiApiKey   string  `hcl:"openaiapikey"`
 	DeepseekApiKey string  `hcl:"deepseekapikey"`

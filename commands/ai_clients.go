@@ -27,9 +27,9 @@ func buildGeminiResponse(resp *genai.GenerateContentResponse) string {
 }
 
 func callOAIAPI(client gpt3.Client, format bool, c tb.Context, configmap settings.Settings, b *tb.Bot, prompt string, model string) error {
-	fmt.Println("DeepSeek -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
+	fmt.Println("OpenAI/DeepSeek -- User ID: " + strconv.FormatInt(c.Sender().ID, 10) + " | username: " + c.Sender().Username + " | full name: " + findPrintableName(c.Sender()) + " | Chat ID: " + strconv.FormatInt(c.Chat().ID, 10))
 	if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
-		settings.ListContainsID(configmap.Deepseekid, c.Message().Chat.ID) {
+		settings.ListContainsID(configmap.OpenAICompatibleId, c.Message().Chat.ID) {
 		if !c.Message().IsReply() {
 			_, err := b.Reply(c.Message(), "Need to reply to a message to use this command")
 			checkPrintErr(err)
@@ -52,7 +52,7 @@ func callOAIAPI(client gpt3.Client, format bool, c tb.Context, configmap setting
 				} else {
 					output := respo.Choices[0].Message.Content
 					if format {
-						// replace DeepSeek Markdown with Telegram markdown (breaks code blocks)
+						// replace standard Markdown with Telegram markdown (breaks code blocks)
 						output = strings.ReplaceAll(output, "**", "TEMP_DOUBLE_ASTERISK")
 						output = strings.ReplaceAll(output, "*", "_")
 						output = strings.ReplaceAll(output, "TEMP_DOUBLE_ASTERISK", "*")
@@ -72,7 +72,7 @@ func callOAIAPI(client gpt3.Client, format bool, c tb.Context, configmap setting
 
 	} else {
 		checkSendErr(errors.New("Error: You are not authorized to use AI in this chat :(\n"+
-			"Try /deepseek here, or ask the admin for access to DeepSeek"), b, c, true)
+			"Try this command in an authorized chat, or ask the admin for access"), b, c, true)
 	}
 	return nil
 }
