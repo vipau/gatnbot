@@ -34,6 +34,11 @@ go.work.sum
 # settings file
 settings.hcl
 
+# Gatnbot specific files
+jvazquez/
+glados/
+model.json
+
 # Editor/IDE
 .idea/
 .vscode/
