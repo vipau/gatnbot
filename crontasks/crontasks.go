@@ -9,12 +9,6 @@ import (
 	"time"
 )
 
-func checkPrintErr(err error) {
-	if err != nil {
-		slog.Error(err.Error())
-	}
-}
-
 var Viernes = &tb.Video{File: tb.FromDisk("jvazquez/viernes.mp4")}
 var Sabado = &tb.Video{File: tb.FromDisk("jvazquez/sabado.mp4")}
 
@@ -23,7 +17,9 @@ func sendToAllChats(message interface{}, config settings.Settings, b *tb.Bot) {
 		// get group instance from ID
 		group := tb.ChatID(i)
 		_, err := b.Send(group, message)
-		checkPrintErr(err)
+		if err != nil {
+			slog.Error(err.Error())
+		}
 	}
 }
 
@@ -37,24 +33,36 @@ func StartCronProcesses(config settings.Settings, b *tb.Bot) {
 	// important
 	_, err := s.Every(1).Monday().Tuesday().Wednesday().Thursday().Friday().
 		At("11:00").At("13:30").At("16:30").Do(func() { sendToAllChats(warning, config, b) })
-	checkPrintErr(err)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	_, err = s.Every(1).Saturday().Sunday().
 		At("14:30").Do(func() { sendToAllChats(warning, config, b) })
-	checkPrintErr(err)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	// its friday then
 	_, err = s.Every(1).Friday().At("08:55").Do(func() { sendToAllChats("https://www.youtube.com/watch?v=1AnG04qnLqI", config, b) })
-	checkPrintErr(err)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 	_, err = s.Every(1).Friday().At("11:00").Do(func() { sendToAllChats(Viernes, config, b) })
-	checkPrintErr(err)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	// SABADOOOOOO
 	_, err = s.Every(1).Saturday().At("10:00").Do(func() { sendToAllChats(Sabado, config, b) })
-	checkPrintErr(err)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	// reload top 500 hacker news articles for the markov chain at midnight
 	_, err = s.Every(1).Day().At("00:00").Do(func() { fakernewsmod.TrainModel() })
-	checkPrintErr(err)
+	if err != nil {
+		slog.Error(err.Error())
+	}
 
 	// start scheduler asynchronously
 	slog.Info("Starting asynchronous scheduler...")

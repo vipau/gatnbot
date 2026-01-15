@@ -34,9 +34,7 @@ func registerSimpleCommands(b *tb.Bot, configmap settings.Settings) {
 	b.Handle("/turbo", func(c tb.Context) error {
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
-			vmin := 4
-			vmax := 57
-			rando := rand.Intn(vmax-vmin+1) + vmin
+			rando := rand.Intn(TurboMaxMinutes-TurboMinMinutes+1) + TurboMinMinutes
 			_, err := b.Send(c.Message().Chat, fmt.Sprintf("this chat is now cringe-protected for %d minutes thanks the power of TURBO", rando))
 			checkPrintErr(err)
 		}
@@ -46,7 +44,7 @@ func registerSimpleCommands(b *tb.Bot, configmap settings.Settings) {
 	b.Handle("/hackernews", func(c tb.Context) error {
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
-			if _, err := os.Stat("model.json"); err == nil {
+			if _, err := os.Stat(ModelFilePath); err == nil {
 			} else if os.IsNotExist(err) {
 				fakernewsmod.TrainModel()
 			} // train the model first if it doesn't exist
@@ -63,7 +61,7 @@ func registerSimpleCommands(b *tb.Bot, configmap settings.Settings) {
 		if settings.ListContainsID(configmap.Chatid, c.Message().Chat.ID) ||
 			settings.ListContainsID(configmap.Usersid, c.Message().Chat.ID) {
 			gladosLine := GetGladosVoiceline()
-			a := &tb.Audio{File: tb.FromDisk("glados/" + gladosLine), Title: gladosLine, Performer: "GLaDOS"}
+			a := &tb.Audio{File: tb.FromDisk(GladosDir + "/" + gladosLine), Title: gladosLine, Performer: "GLaDOS"}
 			_, err := b.Send(c.Message().Chat, a)
 			if err != nil {
 				slog.Error(err.Error())

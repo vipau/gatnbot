@@ -7,7 +7,7 @@ import (
 )
 
 func GetGladosVoiceline() string {
-	files, err := os.ReadDir("glados")
+	files, err := os.ReadDir(GladosDir)
 	if err != nil {
 		log.Fatal(err)
 	}
