@@ -1,0 +1,26 @@
+# Compiled binaries
+gatnbot
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation
+README.md
+UNLICENSE
+
+# Example files
+*.example
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Model files (if large and regenerated at runtime)
+model.json
