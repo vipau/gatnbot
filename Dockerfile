@@ -25,6 +25,10 @@ WORKDIR /gatnbot
 # Copy only the binary from builder
 COPY --from=builder /gatnbot-bin /gatnbot-bin
 
+# Copy zoneinfo (for crontasks) as it's missing on Alpine Linux
+COPY --from=builder /usr/local/go/lib/time/zoneinfo.zip /
+ENV ZONEINFO=/zoneinfo.zip
+
 # Copy any required runtime files (adjust as needed)
 # COPY glados/ /gatnbot/glados/
 # COPY jvazquez/ /gatnbot/jvazquez/
