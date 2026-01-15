@@ -1,16 +1,16 @@
 # Gatnbot
 
-Ver 0.0.1 turbo alpha
+Ver 0.1 - forever beta
 
 ## Files needed for deployment
-- client_secret.json
-    - Credentials to your Oauth service. To be placed in the binary folder.
 - gatnbot
     - compiled binary
 - settings.hcl
     - rename settings.hcl.example to settings.hcl and place it in the binary folder.
 - glados
   - a folder full of GlaDoS voice lines (script to download them soon...)
+- jvazquez
+  - a folder with videos from Jovani Vazquez that get sent every Friday and Saturday morning
   
 ## Telegram authentication
 
